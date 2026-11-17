@@ -94,5 +94,29 @@
   {
     "query": "Generate Go server stubs and TypeScript fetch clients from proto/v1/settlement.proto using buf.gen.yaml and wire a deterministic codegen check into Makefile.",
     "should_trigger": false
+  },
+  {
+    "query": "Draft a 5-section engineering one-pager for our reversible self-serve sandbox reset proposal with a BLUF call, measured baseline, explicit non-goals, status-quo tradeoffs, and kill switch.",
+    "should_trigger": true
+  },
+  {
+    "query": "Critique our OP1 six-pager and Working Backwards PR/FAQ before silent study hall - flag truism tenets that make no real sacrifice, blurred input vs output metrics, or appendix prose overflow.",
+    "should_trigger": true
+  },
+  {
+    "query": "Edit this architecture post in one pass to strip LLM flourishes like 'serves as a cornerstone', trailing ', highlighting...' clauses, 'The result?' pivots, and 'without sacrificing' claims.",
+    "should_trigger": true
+  },
+  {
+    "query": "Implement keyset pagination in our Go Postgres repository so the admin audit table fetches 50 rows per page without OFFSET scan slowdowns on six-million-row partitions.",
+    "should_trigger": false
+  },
+  {
+    "query": "Write a Python script using pypdfium2 that renders a six-page PDF invoice bundle into 150-DPI grayscale PNG thumbnails and uploads each page digest to S3.",
+    "should_trigger": false
+  },
+  {
+    "query": "Diagnose why Linux transparent hugepages allocation fails with ENOMEM on c6i.4xlarge Kubernetes nodes when launching JVM worker pods with -XX:+UseLargePages.",
+    "should_trigger": false
   }
 ]

@@ -11,6 +11,9 @@ Build a generic, cross-harness open-source LLM writing skill with deterministic 
 - **Task 005:** Evaluation suite (`evals/evals.json`, `evals/trigger-evals.json`, `evals/JUDGE.md`) and `samples/` before/after pairs.
 - **Task 006:** Package validator (`scripts/validate_skill.py`) checking word budgets, link integrity, mode symmetry, and prose hygiene.
 - **Task 007:** Executable fitness gates (`F-001`..`F-006`), full open-source `README.md`, and `CHANGELOG.md` release preparation.
+- **Task 008:** Narrative memo reference (`references/one-pager-and-six-pager.md`) for One-Pagers, Six-Pagers, and Working Backwards `PR/FAQs`, plus comma-splice overcorrection and anti-flourish guidance.
+- **Task 009:** Expanded flourish detectors in `scripts/prose_lint.py` (`participial_tail_puffery`, `copula_avoidance`, `rhetorical_qa_pivots`, `performative_fragments`, `nominalizations_per_100w`) and the `10,000`-word combined runtime budget in `scripts/validate_skill.py`.
+- **Task 010:** Narrative `samples/one-pager.{before,after}.md` calibration pair, expanded memo and anti-flourish eval suites (`evals/evals.json`, `evals/trigger-evals.json`), and repository documentation sync.
 
 ## Milestone 2: Corpus Calibration and Iterative Refinement (Planned)
 
