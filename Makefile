@@ -1,8 +1,8 @@
-.PHONY: lint format test fitness fitness-task-state fitness-mermaid fitness-agy-sync check
+.PHONY: lint format test fitness fitness-task-state fitness-mermaid fitness-agy-sync fitness-skill-package fitness-prose-hygiene fitness-samples check
 
 lint:
 	@python3 -m py_compile scripts/check-mermaid.py scripts/sync-agy-skills.py
-	@for f in scripts/*.py tests/*.py; do [ -f "$$f" ] && python3 -m py_compile "$$f" || true; done
+	@for f in scripts/*.py tests/*.py; do if [ -f "$$f" ]; then python3 -m py_compile "$$f"; fi; done
 	@echo "Python syntax check passed."
 
 format:
@@ -23,7 +23,19 @@ fitness-agy-sync:
 	@python3 scripts/sync-agy-skills.py --check
 	@echo "F-003 (Antigravity adapter sync) passed."
 
-fitness: fitness-task-state fitness-mermaid fitness-agy-sync
+fitness-skill-package:
+	@python3 scripts/validate_skill.py
+	@echo "F-004 (skill package validation) passed."
+
+fitness-prose-hygiene:
+	@python3 scripts/validate_skill.py
+	@echo "F-005 (repository prose hygiene) passed."
+
+fitness-samples:
+	@python3 -m unittest tests.test_task_005_evals_and_samples
+	@echo "F-006 (calibration sample regression) passed."
+
+fitness: fitness-task-state fitness-mermaid fitness-agy-sync fitness-skill-package fitness-prose-hygiene fitness-samples
 	@echo "All fitness checks passed."
 
 check: lint test fitness
