@@ -1,0 +1,98 @@
+[
+  {
+    "query": "I have messy debugging notes from a Postgres autovacuum wraparound stall last night - help me turn them into a clear postmortem blog post for backend engineers.",
+    "should_trigger": true
+  },
+  {
+    "query": "Draft an Architecture Decision Record comparing Server-Sent Events and WebSockets for our live build-log viewer, covering operational costs, failure modes, and rollback.",
+    "should_trigger": true
+  },
+  {
+    "query": "Our CLI tool's README takes six paragraphs of project history before showing how to install or run a command. Rewrite it so newcomers get a working result in two minutes.",
+    "should_trigger": true
+  },
+  {
+    "query": "Rewrite this chronological Q3 infrastructure status update into a one-page BLUF decision brief asking the VP of Engineering to approve two EU read replicas by Friday.",
+    "should_trigger": true
+  },
+  {
+    "query": "Help me write a direct, candid email to enterprise workspace admins explaining yesterday's 18-minute webhook delivery delay and the exact command to replay missed events.",
+    "should_trigger": true
+  },
+  {
+    "query": "Write UX error microcopy, empty-state text, and confirmation modal button labels for when an admin uploads an expired SAML certificate or revokes active production API keys.",
+    "should_trigger": true
+  },
+  {
+    "query": "Make this product launch post sound like a real engineer wrote it instead of an LLM - strip out 'seamless', 'pivotal', em dashes, and fake 'not just X, it's Y' pivots.",
+    "should_trigger": true
+  },
+  {
+    "query": "Critique my RFC draft on multi-region queue failover without rewriting it; tell me where the argument is thin, where modes collide, and which metrics lack baselines.",
+    "should_trigger": true
+  },
+  {
+    "query": "Separate the background design rationale out of our etcd snapshot restore runbook and tighten the operational steps so an on-call engineer can follow them at 3 a.m.",
+    "should_trigger": true
+  },
+  {
+    "query": "Draft landing-page hero and body copy for our open-source SQL migration linter aimed at data engineers who want to block table-locking DDL changes in pull requests.",
+    "should_trigger": true
+  },
+  {
+    "query": "Turn these benchmark notes on zero-copy Parquet streaming into a five-minute conference lightning talk script paired with assertive one-takeaway slide titles.",
+    "should_trigger": true
+  },
+  {
+    "query": "Run prose lint diagnostics on docs/architecture/overview.md to check sentence length variation, anchor density, passive voice rate, and any mechanical AI tells.",
+    "should_trigger": true
+  },
+  {
+    "query": "Debug why our async Python BufferedWriter drops the final 4 KB chunk when flushing gzipped NDJSON telemetry files on SIGTERM in src/worker/sink.py.",
+    "should_trigger": false
+  },
+  {
+    "query": "Write an idempotent PostgreSQL 16 SQL migration that builds a partial composite index concurrently on invoices(tenant_id, due_at) and sets lock_timeout to 2s.",
+    "should_trigger": false
+  },
+  {
+    "query": "Scan package-lock.json and audit the newly added postinstall scripts across node_modules for credential exfiltration, suspicious curl calls, or obfuscated payloads.",
+    "should_trigger": false
+  },
+  {
+    "query": "Scaffold a multi-stage Dockerfile and compose.yaml for a Go 1.23 gRPC ledger service using distroless non-root runtime images and grpc_health_probe checks.",
+    "should_trigger": false
+  },
+  {
+    "query": "Write a Python script using standard library zipfile and xml.etree.ElementTree to parse slide dimension attributes and embedded image byte sizes from a .pptx binary.",
+    "should_trigger": false
+  },
+  {
+    "query": "Configure ESLint flat config and Prettier in our TypeScript monorepo so import groups sort deterministically and pre-commit formatting checks run in GitHub Actions.",
+    "should_trigger": false
+  },
+  {
+    "query": "Review src/pool/dispatcher.rs for lock-ordering deadlocks and race conditions between the bounded Tokio mpsc receiver loop and graceful shutdown cancellation.",
+    "should_trigger": false
+  },
+  {
+    "query": "Write parameterized unittest cases and property-based checks verifying round-trip CBOR binary encoding for nested timezone-aware timestamps and uint64 IDs.",
+    "should_trigger": false
+  },
+  {
+    "query": "Write a ClickHouse SQL query computing 28-day rolling cohort retention and p95 query execution duration grouped by customer plan tier and region.",
+    "should_trigger": false
+  },
+  {
+    "query": "Show me the exact git bisect and cherry-pick commands to isolate a memory leak introduced between v2.4.0 and HEAD and backport the fix onto release/2.4.",
+    "should_trigger": false
+  },
+  {
+    "query": "Fix the CSS flexbox overflow bug in src/components/DataTable.tsx where pinned column headers misalign with horizontal scroll containers at 1280px width.",
+    "should_trigger": false
+  },
+  {
+    "query": "Generate Go server stubs and TypeScript fetch clients from proto/v1/settlement.proto using buf.gen.yaml and wire a deterministic codegen check into Makefile.",
+    "should_trigger": false
+  }
+]
