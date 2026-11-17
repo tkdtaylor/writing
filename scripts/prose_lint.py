@@ -1,0 +1,1463 @@
+#!/usr/bin/env python3
+"""prose_lint.py - Stylometric and mechanical prose diagnostics CLI.
+
+Uses only the Python 3.10+ standard library. Computes cadence, lexical
+diversity, substance/posture ratios, and line-numbered mechanical and lexical
+tells matching docs/spec/data-model.md. Never emits a composite AI score.
+"""
+from __future__ import annotations
+
+import argparse
+from collections import Counter
+from dataclasses import dataclass
+import json
+import math
+from pathlib import Path
+import re
+import sys
+from typing import Any
+
+try:
+    from scripts import strip_markdown as _strip_md
+except ImportError:
+    _scripts_dir = str(Path(__file__).resolve().parent)
+    if _scripts_dir not in sys.path:
+        sys.path.insert(0, _scripts_dir)
+    import strip_markdown as _strip_md  # type: ignore[no-redef]
+
+_WORD_RE = re.compile(r"[A-Za-z0-9]+(?:['\u2019-][A-Za-z0-9]+)*")
+_ALPHA_RE = re.compile(r"[A-Za-z]+")
+_VOWEL_GROUP_RE = re.compile(r"[aeiouy]+")
+
+# Placeholder tokens used during sentence segmentation.
+_DOT_PLACEHOLDER = "\x00"
+_ABBREV_RE = re.compile(
+    r"\b(?:e\.g|i\.e|etc|vs|mr|mrs|ms|dr|prof|jr|sr|inc|ltd|co|fig|no|st|v)\.",
+    re.IGNORECASE,
+)
+_DECIMAL_OR_VER_RE = re.compile(r"\b(?:v?\d+(?:\.\d+)+)")
+_FILENAME_EXT_RE = re.compile(
+    r"\b([A-Za-z0-9_-]+)\.(md|py|sh|json|ya?ml|txt|toml|js|ts|tsx|jsx|rs|go|html|css|sql)\b",
+    re.IGNORECASE,
+)
+_INITIALS_RE = re.compile(r"\b(?:[A-Z]\.){2,}")
+_SENT_SPLIT_RE = re.compile(r"(?<=[.!?])\s+(?=[A-Z0-9\"'\(\[`])")
+
+# Minimal closed-class function words for 3-gram content filtering.
+_PURE_STOPWORDS = frozenset(
+    {
+        "a",
+        "an",
+        "the",
+        "and",
+        "or",
+        "but",
+        "if",
+        "of",
+        "in",
+        "on",
+        "at",
+        "to",
+        "for",
+        "by",
+        "with",
+        "as",
+        "is",
+        "are",
+        "was",
+        "were",
+        "be",
+        "been",
+        "it",
+        "its",
+        "that",
+        "this",
+        "from",
+    }
+)
+
+# Concrete anchor patterns
+_NUMERIC_ANCHOR_RE = re.compile(
+    r"\b(?:v\d+(?:\.\d+)*|\d+(?:\.\d+)*(?:%|ms|s|sec|min|hr|h|kb|mb|gb|tb|pb|rps|qps|x|k|m|b)?|p\d{2}|Q[1-4])\b"
+)
+_QUOTED_PHRASE_RE = re.compile(r"\"[^\"\n]{2,80}\"|\u201c[^\u201d\n]{2,80}\u201d")
+_ACRONYM_RE = re.compile(r"^[A-Z]{2,}[0-9]*$")
+_PROPER_NOUN_RE = re.compile(r"^[A-Z][a-z]{2,}$")
+
+# Hedges and boosters
+_HEDGE_PATTERNS = [
+    r"in some cases",
+    r"to some extent",
+    r"it is possible",
+    r"appears? to",
+    r"seems? to",
+    r"tends? to",
+    r"might",
+    r"could",
+    r"may",
+    r"perhaps",
+    r"possibly",
+    r"arguably",
+    r"somewhat",
+    r"roughly",
+    r"approximately",
+    r"apparently",
+    r"seemingly",
+    r"presumably",
+    r"generally",
+    r"typically",
+    r"usually",
+    r"sometimes",
+    r"probably",
+    r"suggests?",
+]
+_HEDGE_RE = re.compile(r"\b(?:" + "|".join(_HEDGE_PATTERNS) + r")\b", re.IGNORECASE)
+
+_BOOSTER_PATTERNS = [
+    r"clearly",
+    r"obviously",
+    r"undoubtedly",
+    r"certainly",
+    r"definitely",
+    r"absolutely",
+    r"undeniably",
+    r"unquestionably",
+    r"always",
+    r"never",
+    r"crucial",
+    r"vital",
+    r"essential",
+    r"critical",
+    r"pivotal",
+    r"paramount",
+    r"transformative",
+    r"revolutionary",
+    r"groundbreaking",
+    r"indispensable",
+    r"unprecedented",
+    r"fundamentally",
+    r"dramatically",
+    r"significantly",
+    r"extremely",
+    r"profoundly",
+    r"testaments?",
+    r"underscores?",
+    r"proves?",
+]
+_BOOSTER_RE = re.compile(
+    r"\b(?:" + "|".join(_BOOSTER_PATTERNS) + r")\b", re.IGNORECASE
+)
+
+_IMPORTANCE_TRIGGER_RE = re.compile(
+    r"\b(pivotal|transformative|crucial|vital|paramount|underscores?|testaments?|"
+    r"indispensable|cornerstone|game-changing|revolutionary)\b",
+    re.IGNORECASE,
+)
+_MECHANISM_MARKER_RE = re.compile(
+    r"(?:\d|%|"
+    r"\b(?:because|by|through|via|when|if|since|unless|until|so that|"
+    r"reduces?|reduced|reducing|increases?|increased|increasing|"
+    r"cuts?|lowers?|prevents?|blocks?|bounds?|caps?|eliminates?|saves?|"
+    r"drops?|raises?|limits?|verifies|validates|encrypts|hashes|caches|retries|"
+    r"ms|sec|seconds|minutes|hours|kb|mb|gb|tb|rps|qps)\b)",
+    re.IGNORECASE,
+)
+
+# Mechanical & lexical tell patterns (using \u2014 escape, never literal em dash)
+_EM_DASH_CHAR = "\u2014"
+
+_AI_TELL_WORDS_RE = re.compile(
+    r"\b("
+    r"delves?|delved|delving|"
+    r"tapestr(?:y|ies)|"
+    r"realms?|"
+    r"testaments?|"
+    r"meticulous(?:ly)?|"
+    r"nestled|nestles?|"
+    r"multifaceted|"
+    r"commendabl(?:e|y)|"
+    r"utiliz(?:e|es|ed|ing|ation)|"
+    r"seamless(?:ly)?|"
+    r"robust(?:ly|ness)?|"
+    r"pivotal|"
+    r"comprehensiv(?:e|ely)|"
+    r"holistic(?:ally)?"
+    r")\b",
+    re.IGNORECASE,
+)
+
+_INFLATED_VERBS_RE = re.compile(
+    r"\b("
+    r"bolsters?|bolstered|bolstering|"
+    r"catalyz(?:e|es|ed|ing)|"
+    r"grappl(?:e|es|ed|ing)|"
+    r"spearheads?|spearheaded|spearheading|"
+    r"amplif(?:y|ies|ied|ying)|"
+    r"exemplif(?:y|ies|ied|ying)|"
+    r"underscor(?:e|es|ed|ing)|"
+    r"fosters?|fostered|fostering|"
+    r"elevat(?:e|es|ed|ing)|"
+    r"streamlin(?:e|es|ed|ing)|"
+    r"supercharg(?:e|es|ed|ing)"
+    r")\b",
+    re.IGNORECASE,
+)
+
+_TECH_BUZZ_NOUNS_RE = re.compile(
+    r"\b("
+    r"substrates?|"
+    r"wedges?|"
+    r"nexus|"
+    r"primitives?|"
+    r"scaffolding|"
+    r"paradigms?|"
+    r"flywheels?|"
+    r"north[- ]stars?"
+    r")\b",
+    re.IGNORECASE,
+)
+
+_FRAMING_THEATER_RE = re.compile(
+    r"\b("
+    r"it(?:'s| is) worth noting|"
+    r"it(?:'s| is) important to note|"
+    r"in today's\b|"
+    r"let(?:'s| us) dive in|"
+    r"here(?:'s| is) the twist|"
+    r"let that sink in|"
+    r"read that again|"
+    r"the key insight|"
+    r"at its core|"
+    r"here(?:'s| is) where it gets interesting|"
+    r"in conclusion"
+    r")",
+    re.IGNORECASE,
+)
+
+_CONTRASTIVE_PIVOT_RE = re.compile(
+    r"("
+    r"\b(?:isn't|is not|aren't|are not|wasn't|was not|not)\s+"
+    r"(?:just|merely|simply)\s+[^.!?;:\n]{1,80}?,\s*"
+    r"(?:it's|it is|they're|they are|that's|that is|we're|we are|but(?:\s+rather)?)\b|"
+    r"\bnot\s+only\b[^.!?;:\n]{1,90}?\bbut\s+also\b"
+    r")",
+    re.IGNORECASE,
+)
+
+_BOLD_BULLET_RE = re.compile(
+    r"^\s*(?:[-*+]|\d+[.)])\s+\*\*([^*]+?)\*\*\s*(?::|-|\u2013|\u2014)?\s+(.+)$"
+)
+_BOLD_COLON_INSIDE_RE = re.compile(
+    r"^\s*(?:[-*+]|\d+[.)])\s+\*\*([^*]+?):\*\*\s+(.+)$"
+)
+_BOLD_COLON_OUTSIDE_RE = re.compile(
+    r"^\s*(?:[-*+]|\d+[.)])\s+\*\*([^*]+?)\*\*\s*:\s+(.+)$"
+)
+
+_EMOJI_CHAR_CLASS = (
+    r"[\U0001F300-\U0001FAFF"
+    r"\u2600-\u26FF"
+    r"\u2700-\u27BF"
+    r"\u2B50\u2B55]"
+)
+_EMOJI_BULLET_RE = re.compile(
+    rf"^\s*(?:(?:[-*+]|\d+[.)])\s*{_EMOJI_CHAR_CLASS}|{_EMOJI_CHAR_CLASS}\ufe0f?\s+\S)"
+)
+
+# Connector colon helpers
+_LEADING_LABEL_PREFIX_RE = re.compile(
+    r"^(?:\s*(?:[-*+]|\d+[.)])\s+)?(?:"
+    r"(?:\*\*[^*]+\*\*|`[^`]+`)(?:\s*\([^)]*\))?\s*:\s*|"
+    r"(?:note|warning|caution|tip|important|example|summary|result|context|"
+    r"problem|decision|status|action|ask|impact|risk|evidence|step\s+\d+)\s*:\s*"
+    r")",
+    re.IGNORECASE,
+)
+_CLAUSE_AUX_OR_PRONOUN_RE = re.compile(
+    r"\b(?:"
+    r"is|are|was|were|am|be|been|being|"
+    r"has|have|had|do|does|did|"
+    r"can|could|will|would|shall|should|may|might|must|"
+    r"it|they|we|you|he|she|i|nobody|everyone|somebody|nothing|everything|"
+    r"there\s+(?:is|are|was|were)"
+    r")\b",
+    re.IGNORECASE,
+)
+_FINITE_VERB_HINT_RE = re.compile(
+    r"\b[a-z]{3,}(?:ed|es|s)\b",
+    re.IGNORECASE,
+)
+
+# False scale (`from X to Y`) helpers
+_FROM_TO_RE = re.compile(
+    r"\bfrom\s+([A-Za-z][A-Za-z0-9_-]*(?:\s+[A-Za-z][A-Za-z0-9_-]*)?)\s+"
+    r"to\s+([A-Za-z][A-Za-z0-9_-]*(?:\s+[A-Za-z][A-Za-z0-9_-]*)?)"
+    r"(?=$|[\s,.;:!?)\]])",
+    re.IGNORECASE,
+)
+_LITERAL_ENDPOINTS = frozenset(
+    {
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+        "january",
+        "february",
+        "march",
+        "april",
+        "may",
+        "june",
+        "july",
+        "august",
+        "september",
+        "october",
+        "november",
+        "december",
+        "jan",
+        "feb",
+        "mar",
+        "apr",
+        "jun",
+        "jul",
+        "aug",
+        "sep",
+        "sept",
+        "oct",
+        "nov",
+        "dec",
+        "morning",
+        "noon",
+        "afternoon",
+        "evening",
+        "night",
+        "midnight",
+        "dawn",
+        "dusk",
+        "start",
+        "end",
+        "beginning",
+        "finish",
+        "top",
+        "bottom",
+        "left",
+        "right",
+        "north",
+        "south",
+        "east",
+        "west",
+        "up",
+        "down",
+        "inside",
+        "outside",
+        "front",
+        "back",
+        "head",
+        "tail",
+        "first",
+        "last",
+        "zero",
+        "one",
+        "two",
+        "three",
+        "four",
+        "five",
+        "ten",
+        "hundred",
+        "stdin",
+        "stdout",
+        "stderr",
+        "input",
+        "output",
+        "source",
+        "target",
+        "destination",
+        "client",
+        "server",
+        "host",
+        "container",
+        "backlog",
+        "active",
+        "completed",
+        "dev",
+        "staging",
+        "prod",
+        "production",
+        "local",
+        "remote",
+        "disk",
+        "memory",
+        "http",
+        "https",
+        "json",
+        "yaml",
+        "markdown",
+        "html",
+        "time",
+        "day",
+        "week",
+        "month",
+        "year",
+        "end-to-end",
+        "a",
+        "z",
+    }
+)
+_COMMON_INFINITIVE_VERBS = frozenset(
+    {
+        "be",
+        "have",
+        "do",
+        "make",
+        "get",
+        "use",
+        "build",
+        "create",
+        "run",
+        "check",
+        "verify",
+        "compute",
+        "ensure",
+        "avoid",
+        "prevent",
+        "reduce",
+        "increase",
+        "keep",
+        "help",
+        "produce",
+        "generate",
+        "load",
+        "read",
+        "write",
+        "parse",
+        "render",
+        "send",
+        "receive",
+        "update",
+        "validate",
+        "enforce",
+        "allow",
+        "enable",
+        "support",
+        "provide",
+        "deliver",
+        "yield",
+        "pass",
+        "return",
+        "extract",
+        "strip",
+        "detect",
+        "flag",
+        "find",
+        "show",
+        "turn",
+        "move",
+        "see",
+        "know",
+        "learn",
+        "test",
+        "fix",
+        "edit",
+        "draft",
+        "review",
+        "lint",
+        "route",
+        "install",
+        "deploy",
+        "configure",
+        "measure",
+        "evaluate",
+        "compare",
+        "analyze",
+        "summarize",
+        "inspect",
+        "open",
+        "close",
+        "add",
+        "remove",
+        "delete",
+        "copy",
+        "fetch",
+        "pull",
+        "push",
+        "merge",
+        "split",
+        "join",
+        "format",
+        "print",
+        "emit",
+        "report",
+        "handle",
+        "process",
+        "solve",
+        "answer",
+        "explain",
+        "describe",
+        "define",
+        "set",
+        "reset",
+        "call",
+        "invoke",
+        "trigger",
+        "launch",
+        "stop",
+        "start",
+    }
+)
+_DETERMINER_AFTER_TO_RE = re.compile(
+    r"^\s+(?:the|a|an|this|that|these|those|our|your|their|its|my|his|her|each|every|all|any|some)\b",
+    re.IGNORECASE,
+)
+_STOP_WORDS_IN_SCALE = frozenset(
+    {
+        "the",
+        "a",
+        "an",
+        "this",
+        "that",
+        "these",
+        "those",
+        "it",
+        "them",
+        "us",
+        "you",
+        "me",
+        "him",
+        "her",
+        "one",
+        "another",
+        "each",
+        "other",
+        "which",
+        "what",
+        "where",
+        "when",
+        "who",
+        "whom",
+        "here",
+        "there",
+    }
+)
+
+# Passive voice helpers
+_PASSIVE_AUX_RE = re.compile(
+    r"\b(?:am|is|are|was|were|be|been|being|get|gets|got|gotten)\s+"
+    r"(?:[a-z]+ly\s+)?([a-z]{3,})\b",
+    re.IGNORECASE,
+)
+_IRREGULAR_PARTICIPLES = frozenset(
+    {
+        "built",
+        "bought",
+        "brought",
+        "broken",
+        "caught",
+        "chosen",
+        "done",
+        "drawn",
+        "driven",
+        "eaten",
+        "fallen",
+        "fed",
+        "felt",
+        "found",
+        "forgotten",
+        "forgiven",
+        "frozen",
+        "given",
+        "gone",
+        "grown",
+        "heard",
+        "held",
+        "hidden",
+        "kept",
+        "known",
+        "laid",
+        "led",
+        "left",
+        "lost",
+        "made",
+        "meant",
+        "met",
+        "paid",
+        "put",
+        "read",
+        "run",
+        "said",
+        "seen",
+        "sent",
+        "set",
+        "shown",
+        "shut",
+        "sold",
+        "spent",
+        "spoken",
+        "spread",
+        "stood",
+        "struck",
+        "taken",
+        "taught",
+        "thought",
+        "thrown",
+        "told",
+        "understood",
+        "won",
+        "worn",
+        "written",
+    }
+)
+_NON_PARTICIPLE_ED_EN = frozenset(
+    {
+        "red",
+        "bed",
+        "sled",
+        "shed",
+        "wed",
+        "open",
+        "even",
+        "often",
+        "sudden",
+        "golden",
+        "wooden",
+        "linen",
+        "chicken",
+        "kitchen",
+        "garden",
+        "citizen",
+        "dozen",
+        "seven",
+        "ten",
+        "men",
+        "women",
+        "children",
+        "token",
+        "green",
+        "screen",
+        "queen",
+        "between",
+        "keen",
+        "naked",
+        "wicked",
+        "sacred",
+        "tired",
+        "excited",
+        "interested",
+        "concerned",
+        "pleased",
+        "supposed",
+        "used",
+        "based",
+    }
+)
+
+# Adverb (-ly) stoplist per Task 004
+_NON_ADVERB_LY = frozenset(
+    {
+        "only",
+        "early",
+        "family",
+        "likely",
+        "unlikely",
+        "supply",
+        "apply",
+        "reply",
+        "daily",
+        "weekly",
+        "monthly",
+        "yearly",
+        "hourly",
+        "quarterly",
+        "friendly",
+        "lovely",
+        "lonely",
+        "timely",
+        "costly",
+        "deadly",
+        "ugly",
+        "holy",
+        "silly",
+        "belly",
+        "jelly",
+        "rally",
+        "tally",
+        "ally",
+        "bully",
+        "folly",
+        "jolly",
+        "hilly",
+        "chilly",
+        "lily",
+        "italy",
+        "july",
+        "fly",
+        "ply",
+        "sly",
+        "rely",
+        "imply",
+        "comply",
+        "multiply",
+        "assembly",
+        "anomaly",
+        "monopoly",
+        "melancholy",
+        "homily",
+        "bodily",
+        "orderly",
+        "elderly",
+        "scholarly",
+        "neighborly",
+        "cowardly",
+        "brotherly",
+        "sisterly",
+        "fatherly",
+        "motherly",
+        "poly",
+    }
+)
+
+
+@dataclass(frozen=True)
+class SentenceSpan:
+    line: int
+    text: str
+    words: list[str]
+
+
+def _make_excerpt(text: str, limit: int = 120) -> str:
+    compact = re.sub(r"\s+", " ", text).strip()
+    if len(compact) <= limit:
+        return compact
+    return compact[: limit - 3].rstrip() + "..."
+
+
+def _protect_dots(text: str) -> str:
+    s = text.replace("...", _DOT_PLACEHOLDER * 3)
+    s = _ABBREV_RE.sub(lambda m: m.group(0).replace(".", _DOT_PLACEHOLDER), s)
+    s = _DECIMAL_OR_VER_RE.sub(
+        lambda m: m.group(0).replace(".", _DOT_PLACEHOLDER), s
+    )
+    s = _FILENAME_EXT_RE.sub(
+        lambda m: f"{m.group(1)}{_DOT_PLACEHOLDER}{m.group(2)}", s
+    )
+    s = _INITIALS_RE.sub(lambda m: m.group(0).replace(".", _DOT_PLACEHOLDER), s)
+    return s
+
+
+def split_sentences(paragraphs_with_lines: list[tuple[int, str]]) -> list[SentenceSpan]:
+    """Split line-tagged paragraphs into SentenceSpan entries."""
+    sentences: list[SentenceSpan] = []
+    for para_line, para_text in paragraphs_with_lines:
+        protected = _protect_dots(para_text)
+        parts = _SENT_SPLIT_RE.split(protected)
+        for part in parts:
+            restored = part.replace(_DOT_PLACEHOLDER, ".").strip()
+            if not restored:
+                continue
+            words = _WORD_RE.findall(restored)
+            if words:
+                sentences.append(SentenceSpan(line=para_line, text=restored, words=words))
+    return sentences
+
+
+def _coeff_of_variation(lengths: list[int]) -> float:
+    if len(lengths) < 2:
+        return 0.0
+    mean = sum(lengths) / len(lengths)
+    if mean <= 0.0:
+        return 0.0
+    variance = sum((x - mean) ** 2 for x in lengths) / len(lengths)
+    return math.sqrt(variance) / mean
+
+
+def _count_syllables(word: str) -> int:
+    letters = "".join(_ALPHA_RE.findall(word)).lower()
+    if not letters:
+        return 1
+    if len(letters) <= 3:
+        return 1
+    if letters.endswith("e") and not (
+        letters.endswith("le") and len(letters) > 2 and letters[-3] not in "aeiouy"
+    ):
+        letters = letters[:-1]
+    elif letters.endswith("ed") and len(letters) > 4 and letters[-3] not in "td":
+        letters = letters[:-2]
+    elif (
+        letters.endswith("es")
+        and len(letters) > 4
+        and not letters.endswith(("ses", "zes", "xes", "ches", "shes"))
+    ):
+        letters = letters[:-2]
+    groups = _VOWEL_GROUP_RE.findall(letters)
+    return max(1, len(groups))
+
+
+def _compute_mattr_50(tokens: list[str]) -> float:
+    n = len(tokens)
+    if n == 0:
+        return 0.0
+    window = 50
+    if n < window:
+        return len(set(tokens)) / n
+    counts: Counter[str] = Counter(tokens[:window])
+    total_ttr = len(counts) / window
+    num_windows = n - window + 1
+    for i in range(window, n):
+        outgoing = tokens[i - window]
+        incoming = tokens[i]
+        counts[outgoing] -= 1
+        if counts[outgoing] == 0:
+            del counts[outgoing]
+        counts[incoming] += 1
+        total_ttr += len(counts) / window
+    return total_ttr / num_windows
+
+
+def _compute_repeated_trigrams(tokens: list[str]) -> tuple[float, list[dict[str, Any]]]:
+    n = len(tokens)
+    if n < 3:
+        return 0.0, []
+    total_trigrams = n - 2
+    min_count = 2 if n < 400 else 3
+
+    trigram_counts: Counter[tuple[str, str, str]] = Counter()
+    for idx in range(total_trigrams):
+        tri = (tokens[idx], tokens[idx + 1], tokens[idx + 2])
+        if all(w in _PURE_STOPWORDS for w in tri):
+            continue
+        trigram_counts[tri] += 1
+
+    repeated_items = [
+        (tri, cnt) for tri, cnt in trigram_counts.items() if cnt >= min_count
+    ]
+    repeated_items.sort(key=lambda item: (-item[1], " ".join(item[0])))
+
+    excess_repeats = sum(cnt - 1 for _, cnt in repeated_items)
+    rate = excess_repeats / total_trigrams if total_trigrams > 0 else 0.0
+    formatted = [
+        {"trigram": " ".join(tri), "count": cnt} for tri, cnt in repeated_items
+    ]
+    return round(rate, 4), formatted
+
+
+def _count_anchors(sentences: list[SentenceSpan]) -> int:
+    anchors = 0
+    for sent in sentences:
+        anchors += len(_QUOTED_PHRASE_RE.findall(sent.text))
+        unquoted = _QUOTED_PHRASE_RE.sub(" ", sent.text)
+        anchors += len(_NUMERIC_ANCHOR_RE.findall(unquoted))
+        words = _WORD_RE.findall(unquoted)
+        for idx, tok in enumerate(words):
+            if _NUMERIC_ANCHOR_RE.fullmatch(tok):
+                continue
+            if idx == 0:
+                if _ACRONYM_RE.fullmatch(tok):
+                    anchors += 1
+                continue
+            if _ACRONYM_RE.fullmatch(tok):
+                anchors += 1
+            elif _PROPER_NOUN_RE.fullmatch(tok):
+                anchors += 1
+    return anchors
+
+
+def _detect_connector_colons(
+    masked_lines: list[str], raw_lines: list[str]
+) -> list[dict[str, Any]]:
+    hits: list[dict[str, Any]] = []
+    n = len(masked_lines)
+    for idx, mline in enumerate(masked_lines):
+        if not mline.strip():
+            continue
+        stripped = mline.strip()
+        # Skip ATX headings, Setext underlines, blockquotes, or lines ending with ':'.
+        if (
+            stripped.startswith("#")
+            or stripped.endswith(":")
+            or re.match(r"^(?:={2,}|-{2,})$", stripped)
+        ):
+            continue
+        # Strip leading label prefixes (e.g. `- **Term**:` or `- `mode=x` (...):`) before masking inline code.
+        without_label = _LEADING_LABEL_PREFIX_RE.sub("", mline)
+        cleaned = _strip_md.mask_inline_syntax_for_tells(without_label).strip()
+        if ": " not in cleaned:
+            continue
+
+        # Inspect each sentence on this line so `A. B: C.` checks `B: C.` cleanly.
+        protected = _protect_dots(cleaned)
+        for sent_part in _SENT_SPLIT_RE.split(protected):
+            sent = sent_part.replace(_DOT_PLACEHOLDER, ".").strip()
+            if ": " not in sent or sent.endswith(":"):
+                continue
+            left, right = sent.split(": ", 1)
+            left_clean = _strip_md.clean_inline_markdown(left)
+            right_clean = _strip_md.clean_inline_markdown(right)
+            if not left_clean or not right_clean:
+                continue
+            # Ignore quotes introduced by a colon (`He wrote: "..."`).
+            if right.lstrip().startswith(('"', "'", "\u201c", "\u2018")):
+                continue
+            left_words = _WORD_RE.findall(left_clean)
+            right_words = _WORD_RE.findall(right_clean)
+            if len(left_words) < 3 or len(right_words) < 4:
+                continue
+            # Distinguish an independent clause from a noun-list enumeration (`a, b, and c`).
+            has_clause_signal = bool(_CLAUSE_AUX_OR_PRONOUN_RE.search(right_clean))
+            is_comma_list = (
+                "," in right_clean
+                and bool(re.search(r",\s*(?:and|or)\b", right_clean, re.IGNORECASE))
+                and not has_clause_signal
+            )
+            if is_comma_list:
+                continue
+            if has_clause_signal or _FINITE_VERB_HINT_RE.search(right_clean):
+                hits.append(
+                    {
+                        "line": idx + 1,
+                        "excerpt": _make_excerpt(raw_lines[idx]),
+                    }
+                )
+                break
+    return hits
+
+
+def _detect_bold_restatement_bullets(
+    masked_lines: list[str], raw_lines: list[str]
+) -> list[dict[str, Any]]:
+    hits: list[dict[str, Any]] = []
+    articles = {"the", "a", "an", "this", "that", "our", "your"}
+    for idx, mline in enumerate(masked_lines):
+        if not mline.strip():
+            continue
+        m = (
+            _BOLD_COLON_INSIDE_RE.match(mline)
+            or _BOLD_COLON_OUTSIDE_RE.match(mline)
+            or _BOLD_BULLET_RE.match(mline)
+        )
+        if not m:
+            continue
+        # Require an explicit separator (colon inside/outside bold or dash) so `- **Codex** auto-loads` is untouched.
+        raw_segment = mline
+        if not re.match(
+            r"^\s*(?:[-*+]|\d+[.)])\s+(?:\*\*[^*]+:\*\*|\*\*[^*]+\*\*\s*(?::|-|\u2013|\u2014))",
+            raw_segment,
+        ):
+            continue
+        term_raw = _strip_md.clean_inline_markdown(m.group(1).rstrip(":"))
+        rest_raw = _strip_md.clean_inline_markdown(m.group(2))
+        term_words = [
+            w.lower() for w in _ALPHA_RE.findall(term_raw) if w.lower() not in articles
+        ]
+        rest_words = [w.lower() for w in _ALPHA_RE.findall(rest_raw)]
+        if not term_words or not rest_words:
+            continue
+        lead_term = term_words[0]
+        lead_rest = rest_words[0]
+        if lead_rest in articles and len(rest_words) >= 2:
+            lead_rest = rest_words[1]
+
+        same_word = lead_term == lead_rest
+        shared_stem = (
+            len(lead_term) >= 5
+            and len(lead_rest) >= 5
+            and (lead_term[:5] == lead_rest[:5])
+        )
+        if same_word or shared_stem:
+            hits.append(
+                {
+                    "line": idx + 1,
+                    "term": term_raw,
+                    "excerpt": _make_excerpt(raw_lines[idx]),
+                }
+            )
+    return hits
+
+
+def _detect_false_scales(
+    masked_lines: list[str], raw_lines: list[str]
+) -> list[dict[str, Any]]:
+    hits: list[dict[str, Any]] = []
+    for idx, mline in enumerate(masked_lines):
+        if not mline.strip():
+            continue
+        cleaned = _strip_md.mask_inline_syntax_for_tells(mline)
+        cleaned = _strip_md.clean_inline_markdown(cleaned, keep_code_text=False)
+        for m in _FROM_TO_RE.finditer(cleaned):
+            x_phrase = m.group(1).strip()
+            y_phrase = m.group(2).strip()
+            combined = f"{x_phrase} {y_phrase}"
+            if re.search(r"\d", combined):
+                continue
+            x_words = [w.lower() for w in _WORD_RE.findall(x_phrase)]
+            y_words = [w.lower() for w in _WORD_RE.findall(y_phrase)]
+            if not x_words or not y_words:
+                continue
+            if any(w in _STOP_WORDS_IN_SCALE for w in (x_words[0], y_words[0])):
+                continue
+            if x_words[-1] in _LITERAL_ENDPOINTS or y_words[-1] in _LITERAL_ENDPOINTS:
+                continue
+            if x_words[0] in _LITERAL_ENDPOINTS or y_words[0] in _LITERAL_ENDPOINTS:
+                continue
+            # Exclude `from <noun> to <infinitive verb> [determiner/object]`.
+            trailing = cleaned[m.end() :]
+            if y_words[0] in _COMMON_INFINITIVE_VERBS and (
+                len(y_words) > 1 or _DETERMINER_AFTER_TO_RE.match(trailing)
+            ):
+                continue
+            if _DETERMINER_AFTER_TO_RE.match(trailing):
+                continue
+            if x_words == y_words:
+                continue
+            hits.append(
+                {
+                    "line": idx + 1,
+                    "match": f"from {x_phrase} to {y_phrase}",
+                    "excerpt": _make_excerpt(raw_lines[idx]),
+                }
+            )
+    return hits
+
+
+def _scan_line_regex(
+    pattern: re.Pattern[str],
+    masked_lines: list[str],
+    raw_lines: list[str],
+    normalize_quotes: bool = False,
+) -> list[dict[str, Any]]:
+    hits: list[dict[str, Any]] = []
+    for idx, mline in enumerate(masked_lines):
+        if not mline.strip():
+            continue
+        cleaned = _strip_md.mask_inline_syntax_for_tells(mline)
+        if normalize_quotes:
+            cleaned = cleaned.replace("\u2019", "'").replace("\u2018", "'")
+        for m in pattern.finditer(cleaned):
+            hits.append(
+                {
+                    "line": idx + 1,
+                    "match": re.sub(r"\s+", " ", m.group(0)).strip().lower(),
+                    "excerpt": _make_excerpt(raw_lines[idx]),
+                }
+            )
+    return hits
+
+
+def _detect_stacked_questions(sentences: list[SentenceSpan]) -> list[dict[str, Any]]:
+    hits: list[dict[str, Any]] = []
+    run: list[SentenceSpan] = []
+
+    def flush_run() -> None:
+        if len(run) >= 3:
+            hits.append(
+                {
+                    "line": run[0].line,
+                    "count": len(run),
+                    "excerpt": _make_excerpt(" ".join(s.text for s in run[:3])),
+                }
+            )
+
+    for sent in sentences:
+        if sent.text.rstrip().endswith("?"):
+            run.append(sent)
+        else:
+            flush_run()
+            run = []
+    flush_run()
+    return hits
+
+
+def _count_passive_voice(sentences: list[SentenceSpan]) -> int:
+    count = 0
+    for sent in sentences:
+        for m in _PASSIVE_AUX_RE.finditer(sent.text):
+            part = m.group(1).lower()
+            if part in _NON_PARTICIPLE_ED_EN:
+                continue
+            if part in _IRREGULAR_PARTICIPLES or (
+                len(part) >= 4 and (part.endswith("ed") or part.endswith("en"))
+            ):
+                count += 1
+    return count
+
+
+def _count_adverbs(tokens: list[str]) -> int:
+    count = 0
+    for tok in tokens:
+        clean = "".join(_ALPHA_RE.findall(tok)).lower()
+        if len(clean) >= 4 and clean.endswith("ly") and clean not in _NON_ADVERB_LY:
+            count += 1
+    return count
+
+
+def _extract_raw_paragraphs(text: str) -> list[tuple[int, str]]:
+    lines = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+    paragraphs: list[tuple[int, str]] = []
+    buf: list[str] = []
+    start_line = 0
+    for idx, line in enumerate(lines):
+        stripped = line.strip()
+        if not stripped:
+            if buf:
+                paragraphs.append((start_line, " ".join(buf)))
+                buf = []
+            continue
+        if not buf:
+            start_line = idx + 1
+        buf.append(stripped)
+    if buf:
+        paragraphs.append((start_line, " ".join(buf)))
+    return paragraphs
+
+
+def analyze_text(
+    text: str, source: str = "<stdin>", raw: bool = False
+) -> dict[str, Any]:
+    """Compute stylometric and mechanical prose diagnostics matching data-model.md."""
+    md_struct = _strip_md.extract_markdown_structure(text)
+    if raw:
+        paragraphs_with_lines = _extract_raw_paragraphs(text)
+        posture_paragraphs = paragraphs_with_lines
+        raw_lines = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+        masked_lines = list(raw_lines)
+    else:
+        paragraphs_with_lines = md_struct.paragraphs_with_lines
+        posture_paragraphs = md_struct.prose_without_code_with_lines
+        raw_lines = md_struct.raw_lines
+        masked_lines = md_struct.masked_lines
+
+    sentences = split_sentences(paragraphs_with_lines)
+    posture_sentences = (
+        sentences if raw else split_sentences(posture_paragraphs)
+    )
+    all_words: list[str] = []
+    for sent in sentences:
+        all_words.extend(sent.words)
+    lower_tokens = [w.lower() for w in all_words]
+
+    word_count = len(all_words)
+    sentence_count = len(sentences)
+    paragraph_word_counts = [
+        len(_WORD_RE.findall(p)) for _, p in paragraphs_with_lines if _WORD_RE.search(p)
+    ]
+    paragraph_count = len(paragraph_word_counts)
+
+    # Cadence metrics
+    all_sent_lengths = [len(s.words) for s in sentences]
+    body_sent_lengths = [ln for ln in all_sent_lengths if ln >= 8]
+    mean_sentence_words = (
+        round(word_count / sentence_count, 2) if sentence_count > 0 else 0.0
+    )
+    all_sent_cv = _coeff_of_variation(all_sent_lengths)
+    body_sent_cv = _coeff_of_variation(body_sent_lengths)
+    para_cv = _coeff_of_variation(paragraph_word_counts)
+
+    cadence_masking = bool(
+        len(body_sent_lengths) >= 2
+        and len(all_sent_lengths) > len(body_sent_lengths)
+        and (all_sent_cv - body_sent_cv) >= 0.15
+        and body_sent_cv < 0.35
+    )
+
+    overloaded_sentences = [
+        {
+            "line": s.line,
+            "words": len(s.words),
+            "excerpt": _make_excerpt(s.text),
+        }
+        for s in sentences
+        if len(s.words) > 35
+    ]
+
+    if word_count > 0 and sentence_count > 0:
+        char_count = sum(sum(1 for ch in w if ch.isalnum()) for w in all_words)
+        syllable_count = sum(_count_syllables(w) for w in all_words)
+        ari_raw = (
+            4.71 * (char_count / word_count)
+            + 0.5 * (word_count / sentence_count)
+            - 21.43
+        )
+        fk_raw = (
+            0.39 * (word_count / sentence_count)
+            + 11.8 * (syllable_count / word_count)
+            - 15.59
+        )
+        ari_grade = round(max(0.0, ari_raw), 2)
+        fk_grade = round(max(0.0, fk_raw), 2)
+    else:
+        ari_grade = 0.0
+        fk_grade = 0.0
+
+    # Lexical diversity metrics
+    mattr_50 = round(_compute_mattr_50(lower_tokens), 3)
+    repeated_trigram_rate, repeated_trigrams = _compute_repeated_trigrams(lower_tokens)
+
+    # Substance and posture metrics
+    norm_text_for_rates = "\n".join(
+        s.text for s in posture_sentences
+    ).replace("\u2019", "'")
+    anchor_count = _count_anchors(sentences)
+    hedge_count = len(_HEDGE_RE.findall(norm_text_for_rates))
+    booster_count = len(_BOOSTER_RE.findall(norm_text_for_rates))
+
+    def per_100w(cnt: int) -> float:
+        return round(cnt * 100.0 / word_count, 2) if word_count > 0 else 0.0
+
+    importance_without_mechanism: list[dict[str, Any]] = []
+    hedge_booster_collisions: list[dict[str, Any]] = []
+    for sent in posture_sentences:
+        sent_norm = sent.text.replace("\u2019", "'")
+        imp_match = _IMPORTANCE_TRIGGER_RE.search(sent_norm)
+        if imp_match and not _MECHANISM_MARKER_RE.search(sent_norm):
+            importance_without_mechanism.append(
+                {
+                    "line": sent.line,
+                    "trigger": imp_match.group(0).lower(),
+                    "excerpt": _make_excerpt(sent.text),
+                }
+            )
+        h_match = _HEDGE_RE.search(sent_norm)
+        b_match = _BOOSTER_RE.search(sent_norm)
+        if h_match and b_match:
+            hedge_booster_collisions.append(
+                {
+                    "line": sent.line,
+                    "hedge": h_match.group(0).lower(),
+                    "booster": b_match.group(0).lower(),
+                    "excerpt": _make_excerpt(sent.text),
+                }
+            )
+
+    # Mechanics and tells on masked raw lines
+    em_dashes: list[dict[str, Any]] = []
+    emoji_bullets: list[dict[str, Any]] = []
+    for idx, mline in enumerate(masked_lines):
+        if not mline.strip():
+            continue
+        no_code = _strip_md.mask_inline_syntax_for_tells(mline)
+        em_cnt = no_code.count(_EM_DASH_CHAR)
+        if em_cnt > 0:
+            em_dashes.append(
+                {
+                    "line": idx + 1,
+                    "count": em_cnt,
+                    "excerpt": _make_excerpt(raw_lines[idx]),
+                }
+            )
+        if _EMOJI_BULLET_RE.match(no_code):
+            emoji_bullets.append(
+                {
+                    "line": idx + 1,
+                    "excerpt": _make_excerpt(raw_lines[idx]),
+                }
+            )
+
+    connector_colons = _detect_connector_colons(masked_lines, raw_lines)
+    bold_restatement_bullets = _detect_bold_restatement_bullets(masked_lines, raw_lines)
+    false_scales = _detect_false_scales(masked_lines, raw_lines)
+    ai_tell_words = _scan_line_regex(_AI_TELL_WORDS_RE, masked_lines, raw_lines)
+    inflated_style_verbs = _scan_line_regex(
+        _INFLATED_VERBS_RE, masked_lines, raw_lines
+    )
+    tech_buzz_nouns = _scan_line_regex(_TECH_BUZZ_NOUNS_RE, masked_lines, raw_lines)
+    framing_theater = _scan_line_regex(
+        _FRAMING_THEATER_RE, masked_lines, raw_lines, normalize_quotes=True
+    )
+    contrastive_pivots = _scan_line_regex(
+        _CONTRASTIVE_PIVOT_RE, masked_lines, raw_lines, normalize_quotes=True
+    )
+    stacked_questions = _detect_stacked_questions(sentences)
+    passive_count = _count_passive_voice(sentences)
+    adverb_count = _count_adverbs(all_words)
+
+    return {
+        "source": source,
+        "word_count": word_count,
+        "sentence_count": sentence_count,
+        "paragraph_count": paragraph_count,
+        "cadence": {
+            "mean_sentence_words": mean_sentence_words,
+            "body_sentence_cv": round(body_sent_cv, 3),
+            "paragraph_word_cv": round(para_cv, 3),
+            "cadence_masking": cadence_masking,
+            "overloaded_sentences": overloaded_sentences,
+            "ari_grade": ari_grade,
+            "flesch_kincaid_grade": fk_grade,
+        },
+        "lexical_diversity": {
+            "mattr_50": mattr_50,
+            "repeated_trigram_rate": repeated_trigram_rate,
+            "repeated_trigrams": repeated_trigrams,
+        },
+        "substance_and_posture": {
+            "anchors_per_100w": per_100w(anchor_count),
+            "hedges_per_100w": per_100w(hedge_count),
+            "boosters_per_100w": per_100w(booster_count),
+            "importance_without_mechanism": importance_without_mechanism,
+            "hedge_booster_collisions": hedge_booster_collisions,
+        },
+        "mechanics_and_tells": {
+            "em_dashes": em_dashes,
+            "connector_colons": connector_colons,
+            "bold_restatement_bullets": bold_restatement_bullets,
+            "emoji_bullets": emoji_bullets,
+            "hard_wrapped_lines": md_struct.hard_wrapped_lines,
+            "false_scales": false_scales,
+            "ai_tell_words": ai_tell_words,
+            "inflated_style_verbs": inflated_style_verbs,
+            "tech_buzz_nouns": tech_buzz_nouns,
+            "framing_theater": framing_theater,
+            "contrastive_pivots": contrastive_pivots,
+            "stacked_questions": stacked_questions,
+            "passive_voice_per_100w": per_100w(passive_count),
+            "adverbs_per_100w": per_100w(adverb_count),
+        },
+    }
+
+
+def format_human_report(report: dict[str, Any]) -> str:
+    """Format a compact, actionable human-readable diagnostic report."""
+    cad = report["cadence"]
+    lex = report["lexical_diversity"]
+    sub = report["substance_and_posture"]
+    mech = report["mechanics_and_tells"]
+
+    lines = [
+        f"Prose Lint: {report['source']}",
+        (
+            f"  Counts: {report['word_count']} words, "
+            f"{report['sentence_count']} sentences, "
+            f"{report['paragraph_count']} paragraphs"
+        ),
+        (
+            f"  Cadence: mean={cad['mean_sentence_words']}w, "
+            f"body_cv={cad['body_sentence_cv']}, "
+            f"para_cv={cad['paragraph_word_cv']}, "
+            f"masking={cad['cadence_masking']}, "
+            f"ARI={cad['ari_grade']}, FK={cad['flesch_kincaid_grade']}"
+        ),
+        (
+            f"  Lexical: MATTR-50={lex['mattr_50']}, "
+            f"repeated_3gram_rate={lex['repeated_trigram_rate']} "
+            f"({len(lex['repeated_trigrams'])} repeated)"
+        ),
+        (
+            f"  Substance: anchors={sub['anchors_per_100w']}/100w, "
+            f"hedges={sub['hedges_per_100w']}/100w, "
+            f"boosters={sub['boosters_per_100w']}/100w, "
+            f"passive={mech['passive_voice_per_100w']}/100w, "
+            f"adverbs={mech['adverbs_per_100w']}/100w"
+        ),
+    ]
+
+    findings: list[str] = []
+    for item in cad["overloaded_sentences"][:5]:
+        findings.append(
+            f"  - L{item['line']} [overloaded_sentence] ({item['words']}w): {item['excerpt']}"
+        )
+    if lex["repeated_trigrams"]:
+        top_tri = ", ".join(
+            f"\"{t['trigram']}\" ({t['count']}x)" for t in lex["repeated_trigrams"][:5]
+        )
+        findings.append(f"  - [repeated_trigrams]: {top_tri}")
+    for item in sub["importance_without_mechanism"][:5]:
+        findings.append(
+            f"  - L{item['line']} [importance_without_mechanism] ({item['trigger']}): {item['excerpt']}"
+        )
+    for item in sub["hedge_booster_collisions"][:5]:
+        findings.append(
+            f"  - L{item['line']} [hedge_booster_collision] ({item['hedge']} + {item['booster']}): {item['excerpt']}"
+        )
+    if mech["hard_wrapped_lines"]:
+        line_str = ", ".join(str(n) for n in mech["hard_wrapped_lines"][:10])
+        findings.append(f"  - [hard_wrapped_lines]: lines {line_str}")
+
+    labeled_categories = [
+        ("em_dashes", "em_dash"),
+        ("connector_colons", "connector_colon"),
+        ("bold_restatement_bullets", "bold_restatement"),
+        ("emoji_bullets", "emoji_bullet"),
+        ("false_scales", "false_scale"),
+        ("ai_tell_words", "ai_tell_word"),
+        ("inflated_style_verbs", "inflated_verb"),
+        ("tech_buzz_nouns", "tech_buzz_noun"),
+        ("framing_theater", "framing_theater"),
+        ("contrastive_pivots", "contrastive_pivot"),
+        ("stacked_questions", "stacked_questions"),
+    ]
+    for key, label in labeled_categories:
+        for item in mech[key][:5]:
+            detail = item.get("match") or item.get("term") or ""
+            suffix = f" ({detail})" if detail else ""
+            findings.append(f"  - L{item['line']} [{label}]{suffix}: {item['excerpt']}")
+
+    if findings:
+        lines.append("  Findings:")
+        lines.extend(findings)
+    else:
+        lines.append("  Findings: none")
+
+    return "\n".join(lines)
+
+
+def _build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="prose_lint.py",
+        description=(
+            "Run stylometric and mechanical prose diagnostics without a composite AI score."
+        ),
+    )
+    parser.add_argument(
+        "files",
+        nargs="*",
+        help="Input file path(s), or '-' / omitted to read from stdin.",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        dest="as_json",
+        help="Emit JSON report (single object for one input, list for multiple).",
+    )
+    parser.add_argument(
+        "--raw",
+        action="store_true",
+        help="Analyze raw text without stripping Markdown syntax first.",
+    )
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = _build_parser()
+    args = parser.parse_args(argv)
+
+    targets = args.files if args.files else ["-"]
+    stdin_cache: str | None = None
+    reports: list[dict[str, Any]] = []
+
+    for target in targets:
+        if target == "-":
+            if stdin_cache is None:
+                stdin_cache = sys.stdin.read()
+            reports.append(analyze_text(stdin_cache, source="<stdin>", raw=args.raw))
+        else:
+            path = Path(target)
+            if not path.is_file():
+                print(f"error: file not found: {target}", file=sys.stderr)
+                return 2
+            try:
+                content = path.read_text(encoding="utf-8")
+            except OSError as exc:
+                print(f"error: cannot read {target}: {exc}", file=sys.stderr)
+                return 2
+            reports.append(analyze_text(content, source=target, raw=args.raw))
+
+    if args.as_json:
+        payload: Any = reports[0] if len(reports) == 1 else reports
+        print(json.dumps(payload, indent=2))
+    else:
+        print("\n\n".join(format_human_report(r) for r in reports))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
