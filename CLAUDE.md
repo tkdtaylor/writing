@@ -35,10 +35,10 @@ Hooks in `.claude/settings.json` are gated by `CLAUDE_HOOK_PROFILE` (`minimal`, 
 
 ## Related projects
 
-Read-only sibling references on this host (do not modify from this repo):
+Read-only sibling repositories (do not modify from this repo):
 
-- `/home/kevin/Code/Public/create-project`: source of workflow templates, hooks, and open-source skill conventions.
-- `/home/kevin/Code/Public/dep-scan`: source of `.agents/` Antigravity adapter scripts (`sync-agy-skills.py`, `check-mermaid.py`).
+- `https://github.com/tkdtaylor/create-project`: source of workflow templates, hooks, and open-source skill conventions.
+- `https://github.com/tkdtaylor/dep-scan`: source of `.agents/` Antigravity adapter scripts (`sync-agy-skills.py`, `check-mermaid.py`).
 
 ## Recommended tooling
 
