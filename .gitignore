@@ -1,0 +1,27 @@
+# Docker Sandbox worktrees
+.sbx/
+
+# Per-task worktrees (created by scripts/start-task.sh under concurrent sessions)
+.claude/worktrees/
+
+# Per-session lock files (used by session-lock.py to detect concurrent sessions)
+.claude/sessions/
+
+# Periodic-checkpoint marker (touched by periodic-checkpoint.py / pre-compact.py)
+.claude/.last-checkpoint
+
+# Local user permissions
+.claude/settings.local.json
+
+# Secrets
+.env
+
+# Python virtual environment and bytecode
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Raw user-supplied writing samples awaiting distillation (never committed)
+training/
+archive/

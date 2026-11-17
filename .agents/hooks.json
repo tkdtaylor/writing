@@ -1,0 +1,27 @@
+{
+  "claude-safety-shell": {
+    "PreToolUse": [
+      {
+        "matcher": "run_command",
+        "hooks": [
+          { "command": "python3 hooks/claude_hook_adapter.py pre block-no-verify protect-checkout no-commit-on-main spec-coverage-check" }
+        ]
+      }
+    ]
+  },
+  "claude-safety-write": {
+    "PreToolUse": [
+      {
+        "matcher": "write_to_file|write_file|replace_file_content|multi_replace_file_content|edit_file",
+        "hooks": [
+          { "command": "python3 hooks/claude_hook_adapter.py pre protect-secrets config-protection" }
+        ]
+      }
+    ]
+  },
+  "claude-retros": {
+    "PreInvocation": [
+      { "command": "python3 hooks/claude_hook_adapter.py context inject-retros" }
+    ]
+  }
+}
