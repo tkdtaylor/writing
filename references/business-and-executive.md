@@ -1,6 +1,6 @@
 # Business and executive writing guide
 
-Use this guide when drafting, editing, or reviewing workplace and leadership prose in the `Decision/Update`, `Argument`, or operational `Explanation` registers. It covers `BLUF` memos, analytical reports, self-contained decision briefs, epistemic claim tagging, metric vetting, async status updates, and professional emails or chat messages.
+Use this guide when drafting, editing, or reviewing workplace and leadership prose in the `Decision/Update`, `Argument`, or operational `Explanation` registers. It covers `BLUF` memos, analytical reports, self-contained decision briefs, epistemic claim tagging, metric vetting, async status updates, and professional emails or chat messages. For standalone **one-pagers** (reversible Type 2 two-way doors), **six-pagers** (irreversible Type 1 one-way doors read in silent study halls), and **Working Backwards PR/FAQs**, load [references/one-pager-and-six-pager.md](one-pager-and-six-pager.md) alongside the epistemic and metric rules below.
 
 ## BLUF memos and analytical reports
 
@@ -13,7 +13,7 @@ Busy readers open a memo to learn what changed, what you recommend, and what you
 
 ## Self-contained decision briefs
 
-A decision brief succeeds when an executive or tech lead can make an informed call from the document alone without chasing five linked threads, slide decks, or chat channels.
+A decision brief succeeds when an executive or tech lead can make an informed call from the document alone without chasing five linked threads, slide decks, or chat channels. Use the five-field schema below for compact multi-item briefs, or switch to the 5-section one-pager or 7-part six-pager blueprints in [references/one-pager-and-six-pager.md](one-pager-and-six-pager.md) for dedicated narrative proposals.
 
 - **Spend words on the decision, not backstory.** Keep historical background under `100` words (`< 100` words). Put the saved space into option tradeoffs, costs, and failure modes.
 - **Consumer impact over internal process narration.** Describe outcomes in customer, user, or operator terms rather than internal code mechanics. Write `"Cardholders complete checkout on the first retry without duplicate holds"`, never `"Refactored PaymentRetryWorker state handlers"`.
