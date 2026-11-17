@@ -154,6 +154,7 @@ class TestTask007Integration(unittest.TestCase):
             "mode=lint",
             "references/technical-and-docs.md",
             "references/business-and-executive.md",
+            "references/one-pager-and-six-pager.md",
             "references/longform-and-persuasion.md",
         ):
             self.assertIn(token, readme_text, f"README.md missing mode or reference token: {token}")
@@ -188,6 +189,8 @@ class TestTask007Integration(unittest.TestCase):
             "scripts/validate_skill.py",
             "samples/technical-doc.before.md",
             "samples/executive-memo.before.md",
+            "samples/one-pager.before.md",
+            "samples/one-pager.after.md",
             "training/inbox/",
             "https://github.com/addyosmani/clarity",
             "https://github.com/cursor/plugins/tree/main/pstack",
@@ -234,6 +237,7 @@ class TestTask007Integration(unittest.TestCase):
             "review-rubric.md",
             "technical-and-docs.md",
             "business-and-executive.md",
+            "one-pager-and-six-pager.md",
             "longform-and-persuasion.md",
             "scripts/",
             "strip_markdown.py",
@@ -244,6 +248,7 @@ class TestTask007Integration(unittest.TestCase):
             "evals.json",
             "trigger-evals.json",
             "samples/",
+            "one-pager",
             "F-001",
             "F-006",
         ):
@@ -309,6 +314,36 @@ class TestTask007Integration(unittest.TestCase):
             self.assertEqual(tells["framing_theater"], [], f"{fname} has framing_theater: {tells['framing_theater']}")
             self.assertEqual(tells["contrastive_pivots"], [], f"{fname} has contrastive_pivots")
             self.assertEqual(
+                tells["participial_tail_puffery"],
+                [],
+                f"{fname} has participial_tail_puffery: {tells['participial_tail_puffery']}",
+            )
+            self.assertEqual(
+                tells["copula_avoidance"],
+                [],
+                f"{fname} has copula_avoidance: {tells['copula_avoidance']}",
+            )
+            self.assertEqual(
+                tells["rhetorical_qa_pivots"],
+                [],
+                f"{fname} has rhetorical_qa_pivots: {tells['rhetorical_qa_pivots']}",
+            )
+            self.assertEqual(
+                tells["performative_fragments"],
+                [],
+                f"{fname} has performative_fragments: {tells['performative_fragments']}",
+            )
+            self.assertEqual(
+                tells["stacked_questions"],
+                [],
+                f"{fname} has stacked_questions: {tells['stacked_questions']}",
+            )
+            self.assertEqual(
+                rep["substance_and_posture"]["importance_without_mechanism"],
+                [],
+                f"{fname} has importance_without_mechanism: {rep['substance_and_posture']['importance_without_mechanism']}",
+            )
+            self.assertEqual(
                 rep["cadence"]["overloaded_sentences"],
                 [],
                 f"{fname} has overloaded_sentences: {rep['cadence']['overloaded_sentences']}",
@@ -321,7 +356,7 @@ class TestTask007Integration(unittest.TestCase):
         self.assertTrue(val_payload["passed"], f"validate_skill errors: {val_payload['errors']}")
         self.assertEqual(val_payload["errors"], [])
         self.assertLessEqual(val_payload["word_counts"]["SKILL.md"], 1500)
-        self.assertLessEqual(val_payload["word_counts"]["combined_runtime"], 8500)
+        self.assertLessEqual(val_payload["word_counts"]["combined_runtime"], 10000)
 
 
 if __name__ == "__main__":

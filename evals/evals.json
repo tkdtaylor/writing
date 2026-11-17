@@ -233,6 +233,68 @@
         "Summarizes substance_and_posture ratios (anchors_per_100w, hedges_per_100w, boosters_per_100w) accurately from tool output",
         "Emits no composite AI detection percentage or single scalar score"
       ]
+    },
+    {
+      "id": 16,
+      "eval_name": "one-pager-vs-six-pager-door-type-selection",
+      "category": "medium_fit",
+      "mode": "draft",
+      "prompt": "mode=draft Write a full 6-page Amazon-style narrative memo (~2,500 words) asking the Director of Developer Experience to approve a reversible self-serve sandbox auto-reset toggle (`sandbox.auto_reset_ttl`) by Thursday, November 12. Notes:\n- Reversible Type 2 feature flag; flipping `sandbox.auto_reset_ttl=false` disables nightly resets in 10 seconds.\n- Baseline: 45 support tickets/week from partner developers stuck with polluted test tenants, 3.5-hour median manual reset wait, 6 engineer-hours/week of support toil.\n- Option A (Recommended): nightly TTL reset worker (6 engineer-days build, $120/month SQS + Lambda cost). Option B: full ephemeral Kubernetes namespace per sandbox (4 engineer-weeks, $1,900/month cluster cost). Status Quo: manual CLI resets ($0 infra cost, 6 engineer-hours/week).\n- Non-goals: production tenant cloning, custom retention past 14 days.\n- Still waiting on Legal sign-off date for sandbox audit-log retention.",
+      "expected_output": "Applies the Door-Type Rule and ceiling-not-quota rule from references/one-pager-and-six-pager.md: pushes back against padding a reversible Type 2 two-way door into a 2,500-word Six-Pager, drafts a crisp 350 to 550-word 5-section One-Pager in complete causal prose, marks the missing Legal sign-off date with [TK: ...], and places Provenance outside the memo.",
+      "files": [],
+      "assertions": [
+        "Applies the Door-Type Rule (reversible Type 2 two-way door vs irreversible Type 1 one-way door) and ceiling-not-quota rule instead of padding thin notes to 2,500 words",
+        "Structures the memo using the 5-section One-Pager blueprint: BLUF / Decision Call, Problem and Customer/System Baseline (<100 words), Scope and Explicit Non-Goals, Viable Options and Tradeoffs (including Status Quo), and Risks, Kill Switch, and Owned Next Steps",
+        "Writes predominantly complete causal paragraphs (80%+ prose density) rather than slide-speak bullet fragments and preserves the 10-second `sandbox.auto_reset_ttl=false` kill switch",
+        "Marks the missing Legal audit-log sign-off date with an explicit [TK: ...] placeholder and puts a Provenance block outside the draft"
+      ]
+    },
+    {
+      "id": 17,
+      "eval_name": "six-pager-tenets-metrics-and-appendix-contract",
+      "category": "medium_fit",
+      "mode": "review",
+      "prompt": "mode=review Critique this excerpt from our OP1 Six-Pager before tomorrow's silent study hall without rewriting it:\n\n# OP1 Plan: Global Ledger Storage Evolution\n\n## 1. Context\nOver the past two years, our payment ledger grew across three continents. In Section 6 on page 6, we will reveal which database architecture we recommend for next year.\n\n## 2. Tenets\n1. Prioritize security, quality, and developer velocity.\n2. Delight every enterprise merchant with world-class reliability.\n\n## 3. Metrics and Plan\nOur primary goal is growing annual net revenue retention to 118%. Moving to active-active multi-region Spanner ($420k/year net increase, 9-month dual-write migration) scales globally without sacrificing write latency. For unit cost math and regional p99 latency numbers, see Appendix B.\n\n## Appendix A: Additional Architecture Discussion (Pages 7-8)\n[Two additional pages of narrative prose arguing why single-region Postgres read replicas were not explored...]",
+      "expected_output": "Delivers a read-only critique (Piece-level diagnosis + Passage-level findings) flagging the page-6 mystery-novel reveal, zero-cost truism Tenets, missing controllable input vs lagging output metric separation and Lessons Learned, unanchored 'without sacrificing' claim, missing steelmanned alternatives, and both violations of the two-way Appendix contract.",
+      "files": [],
+      "assertions": [
+        "Stays strictly read-only and uses Piece-level diagnosis plus Passage-level findings (`keep`, `revise`, `ask-author`, `cut`)",
+        "Flags the mystery-novel opening that hides the recommendation until page 6 and requires stating the governing question and recommendation on page 1",
+        "Challenges zero-cost truism Tenets ('Prioritize security, quality, and developer velocity') and requires tenets that encode a real sacrifice between competing goods",
+        "Calls out missing controllable input metrics vs lagging output metrics (plus candid Lessons Learned), the unanchored 'without sacrificing write latency' claim, and both violations of the two-way Appendix contract (pages 1-6 must stand alone with a one-sentence takeaway from Appendix B, and Appendix A must contain zero narrative prose overflow)"
+      ]
+    },
+    {
+      "id": 18,
+      "eval_name": "anti-flourish-edit-preserves-mechanisms-and-parentheses",
+      "category": "false_positive_restraint",
+      "mode": "edit",
+      "prompt": "mode=edit Edit this architecture note in one pass to cut LLM flourishes while keeping every concrete technical mechanism and genuine parenthetical clarification intact:\n\nOur edge ingress gateway serves as a cornerstone of platform reliability \\u2014 routing 18,000 RPS across three availability zones, highlighting our commitment to operational excellence. The result? Deployments feel effortless. This isn't a proxy tweak. It's a traffic-management paradigm shift. Full stop.\n\nEnvoy acts as a reverse proxy (port 8443, TLS 1.3) in front of Gunicorn. The ingress worker parses webhook headers, ensuring `X-Signature-256` digests match within 300 seconds before queuing jobs (default queue: `webhooks-fast`). Our routing tier behaves less like a load balancer and more like a self-healing flywheel, scaling globally without sacrificing security.",
+      "expected_output": "Strips copula avoidance ('serves as a cornerstone'), trailing '-ing' puffery (', highlighting...'), self-posed Q&A ('The result?'), negative parallelisms ('This isn't... It's...', 'less like... and more like...'), 'Full stop.', the prose em dash, and unanchored 'without sacrificing' claims in one pass, while keeping 'Envoy acts as a reverse proxy', concrete 'ensuring X-Signature-256 digests match within 300 seconds', and real parentheses '(port 8443, TLS 1.3)' and '(default queue: webhooks-fast)' without comma-splice flattening.",
+      "files": [],
+      "assertions": [
+        "Cuts copula avoidance ('serves as a cornerstone'), trailing participial puffery (', highlighting our commitment to operational excellence'), rhetorical Q&A ('The result?'), negative parallelisms, 'Full stop.', and unanchored 'without sacrificing security'",
+        "Preserves literal technical role verbs ('Envoy acts as a reverse proxy') and concrete operational '-ing' mechanisms ('ensuring `X-Signature-256` digests match within 300 seconds') without false-positive deletion",
+        "Retains genuine parenthetical clarifications ('(port 8443, TLS 1.3)' and '(default queue: `webhooks-fast`)') and preserves the 18,000 RPS / three availability zones facts",
+        "Eliminates the prose em dash using explicit clause structure or periods rather than introducing a comma splice"
+      ]
+    },
+    {
+      "id": 19,
+      "eval_name": "one-pager-rewrite-and-quote-provenance",
+      "category": "factual_fidelity",
+      "mode": "edit",
+      "prompt": "mode=edit Rewrite samples/one-pager.before.md into a clean 5-section One-Pager (350 to 550 words) for the Director of Merchant Platform, and add a short customer quote from a merchant CTO praising the 2-minute replay workflow.",
+      "expected_output": "Rewrites samples/one-pager.before.md into the 5-section One-Pager blueprint (350 to 550 words) preserving all supplied numbers, options (including Status Quo), and the 15-second kill switch, refuses to fabricate an invented merchant CTO quote in an operational one-pager (using [TK: customer quote] or noting Safeguard #1), and strips all mechanical and flourish tells.",
+      "files": [
+        "samples/one-pager.before.md"
+      ],
+      "assertions": [
+        "Follows the 5-section One-Pager blueprint within 350 to 550 words, including BLUF decision call, <100-word baseline, explicit non-goals, options including Status Quo, and the `webhooks.self_serve_replay=false` kill switch",
+        "Refuses to invent a fabricated merchant CTO quote under Safeguard #1 and uses `[TK: ...]` for missing customer quotes and pending October 9 PCI header redaction sign-off",
+        "Preserves exact source numbers (14,200 dropped batches, 68 tickets, 11 hours/week, $190/month Option A vs $640/month Option B vs $0 Status Quo, 50 RPS cap)",
+        "Removes all prose em dashes, emoji bullets, copula avoidance, trailing `-ing` puffery, rhetorical Q&A pivots, performative fragments, and unanchored `without sacrificing` claims"
+      ]
     }
   ]
 }

@@ -10,7 +10,7 @@ Keep this file harness-neutral. Put harness-specific mechanics in `CLAUDE.md` or
 
 ## What this is
 
-`writing` is an open-source, cross-harness **LLM writing skill** for drafting, editing, reviewing, and linting any kind of prose produced with a language model. It combines substance-first editorial principles and provenance safeguards (inspired by `addyosmani/clarity`) with structural clarity, Diataxis mode discipline, decision-brief schemas, and anti-slop rules (inspired by `cursor/plugins/pstack`), organized through a token-budgeted mode and genre router.
+`writing` is an open-source, cross-harness **LLM writing skill** for drafting, editing, reviewing, and linting any kind of prose produced with a language model. It combines substance-first editorial principles and provenance safeguards (inspired by `addyosmani/clarity`) with structural clarity, Diataxis mode discipline, narrative decision memos, and anti-slop rules (inspired by `cursor/plugins/pstack`). A token-budgeted mode and genre router keeps runtime context lean.
 
 The product is `SKILL.md`, `commands/write-*.md`, `references/*.md`, zero-dependency Python 3 diagnostic tools in `scripts/`, evaluation benchmarks in `evals/`, and before/after calibration pairs in `samples/`.
 
@@ -25,15 +25,16 @@ references/                  <- on-demand workflow & genre guides (<1,500 words 
   review-rubric.md             read-only critique schema (keep / revise / ask-author / cut)
   technical-and-docs.md        Diataxis, developer style, STE, Global English, READMEs, RFCs/ADRs, PR briefs
   business-and-executive.md    BLUF memos, decision briefs, epistemic labels, metric vetting, emails
+  one-pager-and-six-pager.md   door-type matrix, 5-part one-pagers, 7-part six-pagers, PR/FAQs, appendix contract
   longform-and-persuasion.md   essays, landing copy, UX microcopy, speeches/slides, progressive visuals, narrative
 scripts/                     <- zero-dep Python 3 CLIs + repo workflow scripts
   strip_markdown.py            strips Markdown/code/tables/frontmatter to clean reader-visible prose
-  prose_lint.py                stylometric & mechanical prose diagnostics (no composite detector score)
-  validate_skill.py            enforces word budgets, routing completeness, broken links, and prose hygiene
+  prose_lint.py                stylometric, mechanical, and flourish prose diagnostics (no composite detector score)
+  validate_skill.py            enforces word budgets (<=1,500/file, <=10,000 combined), routing, links, and hygiene
   start-task.sh / finish-task.sh / check-task-state.sh / verify-worktree-isolation.sh
   check-mermaid.py / sync-agy-skills.py
 evals/                       <- JUDGE.md blinded rubric + evals.json + trigger-evals.json
-samples/                     <- committed before/after calibration pairs
+samples/                     <- committed before/after calibration pairs (technical-doc, executive-memo, one-pager)
 tests/                       <- Python unittest suite verifying scripts, skill budgets, and task specs
 docs/                        <- spec + architecture + roadmap + task backlog (input side)
   spec/                        authoritative current-state snapshot (7 files)
@@ -74,7 +75,7 @@ Every prose file in this repository is a live demonstration of the skill's stand
 - **Continuous single-line paragraphs.** Never hard-wrap prose paragraphs at 80 characters with embedded newlines. Use two trailing spaces only for genuine hard line breaks.
 - **List spacing.** Always put a blank line between an intro sentence or bold heading and the first `- ` or `1. ` list item.
 - **Plain vocabulary.** Prefer plain words (`use`, `help`, `to`) over inflated AI-tell words, and avoid emoji bullets in formal documents. Never use a real client or reader name as a negative example.
-- **Token discipline.** Keep `SKILL.md` under 1,500 words and each file in `references/` under 1,500 words.
+- **Token discipline.** Keep `SKILL.md` under 1,500 words, each file in `references/` under 1,500 words, and the combined runtime package at or under 10,000 words.
 - **Test-spec-first.** Every task `docs/tasks/backlog/NNN-slug.md` requires a paired `docs/tasks/test-specs/NNN-slug-test-spec.md` with `TC-NNN-XX` markers verified by tests in `tests/`.
 - **Keep spec in sync.** Update `docs/spec/` in the same commit whenever externally visible skill routes, scripts, schemas, or fitness gates change.
 
