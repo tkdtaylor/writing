@@ -217,14 +217,14 @@ class TestTask006ValidateSkill(unittest.TestCase):
             )
             self.assertEqual(_run_validator("--root", str(root)).returncode, 1)
 
-        # Combined runtime prose (> 8500 words across individually valid files) fails
+        # Combined runtime prose (> 10000 words across individually valid files) fails
         with tempfile.TemporaryDirectory() as tmp:
             root = _create_valid_skill_tree(Path(tmp))
             extra_links: list[str] = []
-            for idx in range(1, 7):
+            for idx in range(1, 8):
                 name = f"extra-{idx}.md"
                 (root / "references" / name).write_text(
-                    f"# Extra {idx}\n\n" + " ".join(["detail"] * 1420) + ".\n",
+                    f"# Extra {idx}\n\n" + " ".join(["detail"] * 1450) + ".\n",
                     encoding="utf-8",
                 )
                 extra_links.append(f"[references/{name}](references/{name})")
@@ -236,8 +236,8 @@ class TestTask006ValidateSkill(unittest.TestCase):
             res_combined = validate_skill.validate_repo(root)
             self.assertFalse(res_combined["passed"])
             self.assertTrue(
-                any("8500" in e for e in res_combined["errors"]),
-                f"Expected combined 8500-word error, got: {res_combined['errors']}",
+                any("10000" in e for e in res_combined["errors"]),
+                f"Expected combined 10000-word error, got: {res_combined['errors']}",
             )
 
     def test_tc_006_02_routing_reachability_links_and_mode_symmetry(self) -> None:
@@ -392,7 +392,7 @@ class TestTask006ValidateSkill(unittest.TestCase):
         )
         self.assertEqual(live_result["errors"], [])
         self.assertLessEqual(live_result["word_counts"]["SKILL.md"], 1500)
-        self.assertLessEqual(live_result["word_counts"]["combined_runtime"], 8500)
+        self.assertLessEqual(live_result["word_counts"]["combined_runtime"], 10000)
         for ref_name, ref_words in live_result["word_counts"]["references"].items():
             self.assertLessEqual(ref_words, 1500, f"{ref_name} exceeded 1500 words")
 

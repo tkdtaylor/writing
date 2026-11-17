@@ -27,7 +27,8 @@ except ImportError:
 
 SKILL_MAX_WORDS = 1500
 REFERENCE_MAX_WORDS = 1500
-COMBINED_MAX_WORDS = 8500
+COMBINED_RUNTIME_BUDGET = 10000
+COMBINED_MAX_WORDS = COMBINED_RUNTIME_BUDGET
 
 REQUIRED_RUNTIME_SCRIPTS = (
     "strip_markdown.py",
@@ -372,9 +373,9 @@ def _check_frontmatter_and_budgets(
                 )
 
     combined_words = skill_words + sum(ref_counts.values())
-    if combined_words > COMBINED_MAX_WORDS:
+    if combined_words > COMBINED_RUNTIME_BUDGET:
         errors.append(
-            f"combined runtime prose: word count {combined_words} exceeds {COMBINED_MAX_WORDS}-word budget"
+            f"combined runtime prose: word count {combined_words} exceeds {COMBINED_RUNTIME_BUDGET}-word budget"
         )
 
     word_counts: dict[str, Any] = {

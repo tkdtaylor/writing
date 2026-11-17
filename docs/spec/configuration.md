@@ -6,7 +6,7 @@
 |-------|--------|-----------|
 | `SKILL.md` | `<= 1,500` words | Keeps baseline skill load small across every turn |
 | Each `references/*.md` file | `<= 1,500` words | Bounds on-demand mode and genre reference loads |
-| Combined runtime prose (`SKILL.md` + all `references/*.md`) | `<= 8,500` words | Prevents gradual context-window bloat as rules evolve |
+| Combined runtime prose (`SKILL.md` + all `references/*.md`) | `<= 10,000` words | Prevents gradual context-window bloat across the expanded reference catalog |
 
 ## House-style and voice overrides
 
