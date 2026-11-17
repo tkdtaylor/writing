@@ -1,0 +1,20 @@
+# Test Spec 008: One-Pager, Six-Pager, and Anti-Flourish Skill Guides
+
+- **Task:** `docs/tasks/backlog/008-one-pager-six-pager-and-anti-flourish-guides.md`
+- **Test file:** `tests/test_task_008_memos_and_flourish.py`
+
+## Requirements
+
+- **REQ-008-01:** `references/one-pager-and-six-pager.md` exists (`450 <= words <= 1500`) and specifies: (a) the format selection matrix distinguishing One-Pagers (`350` to `550` words, reversible Type 2 two-way doors or discovery gates), Six-Pagers (`<= 2,500` words body + Appendix, irreversible Type 1 one-way doors, `15` to `30` minute silent study hall read, six pages as strict ceiling rather than padding quota), and Working Backwards PR/FAQs (explicitly labeling hypothetical quotes `[Hypothetical PR-FAQ illustration]` or `[TK: customer quote]`, and banning invented quotes in operational memos); (b) the 5-section One-Pager blueprint; (c) the 7-part Six-Pager blueprint including `Tenets` that encode real sacrifices rather than zero-cost truisms, controllable input vs lagging output metrics, candid `Lessons Learned`, steelmanned alternatives, and `Appendices`; and (d) the `80%+` complete-prose rule plus the two-way Appendix contract (stand-alone pages 1-6 and zero narrative overflow).
+- **REQ-008-02:** `SKILL.md` (`<= 1500` words) and `references/business-and-executive.md` (`<= 1500` words) route and cross-link `one-pager`, `six-pager`, and `PR/FAQ` requests to `references/one-pager-and-six-pager.md`, and `SKILL.md` Step 3 updates punctuation guidance so replacing em dashes uses exact connectors, parentheses `(...)` for brief genuine asides, or periods rather than monotonous comma splices.
+- **REQ-008-03:** `references/edit-and-anti-slop.md` (`<= 1500` words) documents empirical anti-flourish patterns and rewrites: trailing participial `-ing` puffery clauses (`highlighting`, `underscoring`, `ensuring`, `fostering`, `showcasing`, `paving the way for`), copula avoidance (`serves as`, `stands as`, `boasts`), self-posed rhetorical Q&A pivots (`The result?`), performative mic-drop fragments (`Full stop.`, `Simple as that.`), metaphorical flourish verbs (`unleash`, `harness`, `reimagine`, `ignite`, `weave`, `unpack`) and magic adverbs (`quietly`, `genuinely`, `deeply`, `remarkably`), expanded negative parallelisms (`less like X and more like Y`, `rather than merely`, two-sentence `isn't X. It's Y.`), tradeoff-denial clauses (`without sacrificing`, `without compromising`), nominalization chains, paragraph-closing tie-backs (`Together, these...`, `Ultimately, this...`), and vague plural attributions (`Experts argue`).
+- **REQ-008-04:** `docs/architecture/decisions/002-narrative-memos-and-anti-flourish-rules.md` records ADR 002, and all touched Markdown files satisfy prose hygiene and runtime word budgets (`combined_runtime <= 8500` before Task 009 budget expansion).
+
+## Test Cases
+
+| ID | Requirement | Input / Target | Expected Assertion |
+|----|-------------|----------------|--------------------|
+| `TC-008-01` | `REQ-008-01` | `references/one-pager-and-six-pager.md` | Exists, `450 <= words <= 1500`, covers Type 1/Type 2 doors, word/page ceilings, PR/FAQ quote safeguard, 5-part One-Pager, 7-part Six-Pager, sacrifice-bearing Tenets, `80%+` prose rule, and two-way Appendix contract |
+| `TC-008-02` | `REQ-008-02` | `SKILL.md` and `references/business-and-executive.md` | Both `<= 1500` words, link `one-pager-and-six-pager.md`, mention one-pagers and six-pagers in frontmatter/routing, and warn against comma-splice flattening when replacing em dashes |
+| `TC-008-03` | `REQ-008-03` | `references/edit-and-anti-slop.md` | `<= 1500` words, documents participial `-ing` tail puffery, copula avoidance, rhetorical Q&A pivots, mic-drop fragments, flourish verbs/magic adverbs, expanded negative parallelisms, tradeoff denial, nominalizations, tie-backs, and vague attributions |
+| `TC-008-04` | `REQ-008-04` | ADR 002 + all touched Markdown files via `validate_skill.py` | ADR 002 exists, zero prose `\u2014` or emoji bullets or hard wraps, and `validate_skill.py` passes (`exit 0`) |
