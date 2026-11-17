@@ -26,6 +26,7 @@ After selecting the workflow mode, the skill classifies the target register (`Ar
 
 - `references/technical-and-docs.md`: tutorials, how-to guides, reference docs, architecture explanations, READMEs, RFCs/ADRs, and PR/change briefings.
 - `references/business-and-executive.md`: BLUF memos, reports, self-contained decision briefs, async catch-ups, metric reporting, and emails/messages.
+- `references/one-pager-and-six-pager.md`: reversible Type 2 one-pagers, irreversible Type 1 six-pagers, Working Backwards PR/FAQs, sacrifice-bearing tenets, and standalone narrative memos with appendices.
 - `references/longform-and-persuasion.md`: essays, blog posts, newsletters, marketing/landing pages, UX microcopy, speeches/slides, progressive diagrams, and creative narrative.
 
 ## B-004: Co-Writing, Brief Deepening, and Provenance (`mode=draft`)
@@ -42,8 +43,8 @@ For substantive original pieces where source material is thin, `draft` restates 
 
 ## B-007: Markdown Stripping and Stylometric Prose Linting (`mode=lint`)
 
-`scripts/strip_markdown.py` removes YAML frontmatter, code blocks, HTML comments, tables, and link URLs to yield clean prose blocks. `scripts/prose_lint.py` computes cadence statistics (body sentence CV for sentences `>=8` words, cadence masking flag, paragraph word CV, readability grades), lexical diversity (MATTR-50, repeated 3-gram rate), substance ratios (concrete anchors vs hedges and boosters, importance-without-mechanism sentences, hedge-booster collisions), and mechanical tells (em dashes, mid-sentence connector colons, bold-label restatements, emoji bullets, hard-wrapped paragraphs, false `from X to Y` scales, AI-tell lexis, inflated style verbs, tech buzz-nouns, framing theater, contrastive pivots).
+`scripts/strip_markdown.py` removes YAML frontmatter, code blocks, HTML comments, tables, and link URLs to yield clean prose blocks. `scripts/prose_lint.py` computes cadence statistics (body sentence CV for sentences `>=8` words, cadence masking flag, paragraph word CV, readability grades), lexical diversity (MATTR-50, repeated 3-gram rate), substance ratios (concrete anchors vs hedges and boosters, importance-without-mechanism and unanchored tradeoff-denial sentences, hedge-booster collisions), and mechanical/flourish tells (em dashes, mid-sentence connector colons, bold-label restatements, emoji bullets, hard-wrapped paragraphs, false `from X to Y` scales, AI-tell lexis, inflated style verbs, tech buzz-nouns, framing theater, intra-sentence and split contrastive pivots, trailing participial `-ing` puffery, copula avoidance, self-posed rhetorical Q&A pivots, performative mic-drop fragments, and prepositional nominalization chains).
 
 ## B-008: Package Validation (`scripts/validate_skill.py`)
 
-`scripts/validate_skill.py` verifies `SKILL.md` frontmatter and word count (`<=1,500` words), per-reference word count (`<=1,500` words), combined runtime budget (`<=8,500` words), reachability of all `references/*.md`, `commands/*.md`, and `scripts/*.py` from `SKILL.md`, valid relative Markdown links, `mode=` symmetry between `commands/write-*.md` and `SKILL.md`, `evals/*.json` schema validity, and clean prose hygiene across repository Markdown files.
+`scripts/validate_skill.py` verifies `SKILL.md` frontmatter and word count (`<=1,500` words), per-reference word count (`<=1,500` words), combined runtime budget (`<=10,000` words), reachability of all `references/*.md`, `commands/*.md`, and `scripts/*.py` from `SKILL.md`, valid relative Markdown links, `mode=` symmetry between `commands/write-*.md` and `SKILL.md`, `evals/*.json` schema validity, and clean prose hygiene across repository Markdown files.

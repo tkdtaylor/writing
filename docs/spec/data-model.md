@@ -58,9 +58,14 @@ No composite score field is permitted. Output keys:
     "tech_buzz_nouns": [],
     "framing_theater": [],
     "contrastive_pivots": [],
+    "participial_tail_puffery": [],
+    "copula_avoidance": [],
+    "rhetorical_qa_pivots": [],
+    "performative_fragments": [],
     "stacked_questions": [],
     "passive_voice_per_100w": 1.2,
-    "adverbs_per_100w": 1.8
+    "adverbs_per_100w": 1.8,
+    "nominalizations_per_100w": 0.0
   }
 }
 ```

@@ -150,7 +150,8 @@ _BOOSTER_RE = re.compile(
 
 _IMPORTANCE_TRIGGER_RE = re.compile(
     r"\b(pivotal|transformative|crucial|vital|paramount|underscores?|testaments?|"
-    r"indispensable|cornerstone|game-changing|revolutionary)\b",
+    r"indispensable|cornerstone|game-changing|revolutionary|"
+    r"without\s+sacrificing|without\s+compromising|distinction\s+matters)\b",
     re.IGNORECASE,
 )
 _MECHANISM_MARKER_RE = re.compile(
@@ -187,7 +188,7 @@ _AI_TELL_WORDS_RE = re.compile(
 )
 
 _INFLATED_VERBS_RE = re.compile(
-    r"\b("
+    r"(?<!-)\b("
     r"bolsters?|bolstered|bolstering|"
     r"catalyz(?:e|es|ed|ing)|"
     r"grappl(?:e|es|ed|ing)|"
@@ -198,8 +199,23 @@ _INFLATED_VERBS_RE = re.compile(
     r"fosters?|fostered|fostering|"
     r"elevat(?:e|es|ed|ing)|"
     r"streamlin(?:e|es|ed|ing)|"
-    r"supercharg(?:e|es|ed|ing)"
-    r")\b",
+    r"supercharg(?:e|es|ed|ing)|"
+    r"unleash(?:es|ed|ing)?|"
+    r"harness(?:es|ed|ing)?|"
+    r"reimagin(?:e|es|ed|ing)|"
+    r"ignit(?:e|es|ed|ing)|"
+    r"illuminat(?:e|es|ed|ing)"
+    r")\b(?!-)",
+    re.IGNORECASE,
+)
+_HARNESS_NOUN_PREFIX_RE = re.compile(
+    r"\b(?:"
+    r"a|an|the|any|each|every|some|no|this|these|those|"
+    r"my|our|your|its|their|other|many|several|multiple|different|various|supported|"
+    r"local|custom|host|target|single|same|"
+    r"across|in|into|within|between|among|for|from|with|without|of|on|at|by|"
+    r"agent|test|testing|eval|evaluation|benchmark|safety|wiring|cli|runtime|skill|party"
+    r")\s+$",
     re.IGNORECASE,
 )
 
@@ -217,19 +233,26 @@ _TECH_BUZZ_NOUNS_RE = re.compile(
     re.IGNORECASE,
 )
 
+_LEADING_BLOCK_MARKER_RE = re.compile(r"^\s*(?:>\s*)*(?:[-*+]|\d+[.)])?\s*")
 _FRAMING_THEATER_RE = re.compile(
-    r"\b("
+    r"(?:"
+    r"\b(?:"
     r"it(?:'s| is) worth noting|"
     r"it(?:'s| is) important to note|"
     r"in today's\b|"
-    r"let(?:'s| us) dive in|"
-    r"here(?:'s| is) the twist|"
+    r"let(?:'s| us) (?:dive in|break (?:this|it) down|unpack(?:\s+(?:this|that|it))?)\b|"
+    r"here(?:'s| is) the (?:twist|kicker|catch|thing)\b|"
     r"let that sink in|"
     r"read that again|"
     r"the key insight|"
     r"at its core|"
     r"here(?:'s| is) where it gets interesting|"
-    r"in conclusion"
+    r"in conclusion|"
+    r"despite these challenges|"
+    r"at the end of the day|"
+    r"so,\s+to answer your question"
+    r")|"
+    r"(?:^|(?<=[.!?])\s+)together,\s+these\b"
     r")",
     re.IGNORECASE,
 )
@@ -239,8 +262,88 @@ _CONTRASTIVE_PIVOT_RE = re.compile(
     r"\b(?:isn't|is not|aren't|are not|wasn't|was not|not)\s+"
     r"(?:just|merely|simply)\s+[^.!?;:\n]{1,80}?,\s*"
     r"(?:it's|it is|they're|they are|that's|that is|we're|we are|but(?:\s+rather)?)\b|"
-    r"\bnot\s+only\b[^.!?;:\n]{1,90}?\bbut\s+also\b"
+    r"\bnot\s+only\b[^.!?;:\n]{1,90}?\bbut\s+also\b|"
+    r"\bless\s+(?:like|about)\s+[^.!?;:\n]{1,80}?(?:,\s*(?:and\s+)?|\s+and\s+)more\s+(?:like|about)\b|"
+    r"\brather\s+than\s+(?:merely|simply)\b"
     r")",
+    re.IGNORECASE,
+)
+_STACCATO_NOT_SENT_RE = re.compile(r"^Not\b(?!\s+only\b).*[.]$")
+_SPLIT_PIVOT_NEG_MOD_RE = re.compile(r"\bnot\s+(?:just|merely|simply)\b", re.IGNORECASE)
+_SPLIT_PIVOT_COPULA_NEG_RE = re.compile(
+    r"\b(?:isn't|is\s+not|aren't|are\s+not|wasn't|was\s+not|weren't|were\s+not|"
+    r"it's\s+not|that's\s+not|they're\s+not|not\s+(?:just|merely|simply))\b",
+    re.IGNORECASE,
+)
+_SPLIT_PIVOT_S1_DEM_NEG_RE = re.compile(
+    r"^(?:(?:This|That|It)\s+(?:isn't|is\s+not|wasn't|was\s+not)|It's\s+not|That's\s+not)\b",
+    re.IGNORECASE,
+)
+_SPLIT_PIVOT_S2_INSTEAD_RE = re.compile(
+    r"^(?:Instead|Rather),\s+(?:it(?:'s|\s+is|\s+was)|they(?:'re|\s+are|\s+were)|"
+    r"that(?:'s|\s+is|\s+was)|this\s+(?:is|was))\b",
+    re.IGNORECASE,
+)
+_SPLIT_PIVOT_S2_REFRAME_RE = re.compile(
+    r"^(?:(?:Instead|Rather),\s+)?(?:it(?:'s|\s+is|\s+was)|they(?:'re|\s+are|\s+were)|"
+    r"that(?:'s|\s+is|\s+was)|this\s+(?:is|was)|we(?:'re|\s+are|\s+were))\b",
+    re.IGNORECASE,
+)
+_SPLIT_PIVOT_S2_PASSIVE_RE = re.compile(
+    r"^(?:It(?:'s|\s+is|\s+was)|That(?:'s|\s+is|\s+was)|This\s+(?:is|was))\s+"
+    r"(?!used\b|enabled\b|disabled\b|rejected\b|accepted\b|required\b|supported\b|"
+    r"ignored\b|configured\b|set\b|stored\b|sent\b|handled\b|processed\b|"
+    r"validated\b|verified\b|blocked\b|allowed\b|called\b|invoked\b|deprecated\b|"
+    r"logged\b|retried\b|cached\b|dropped\b)",
+    re.IGNORECASE,
+)
+
+_PARTICIPIAL_TAIL_RE = re.compile(
+    r",\s+(?:thereby\s+|thus\s+|ultimately\s+)?"
+    r"(?:highlighting|underscoring|emphasizing|ensuring|fostering|cultivating|"
+    r"showcasing|reflecting|symbolizing|exemplifying|paving\s+the\s+way\s+for|"
+    r"contributing\s+to)\b[^.!?]*[.!?'\")\]]*$",
+    re.IGNORECASE,
+)
+_COPULA_AVOIDANCE_RE = re.compile(
+    r"\b(?:"
+    r"(?:serves?|served|stands?|stood|functions?|acts?|operates?)\s+as\s+a(?:n)?\s+"
+    r"(?:(?:key|core|vital|crucial|critical|powerful|stark|clear|true|central|essential|"
+    r"foundational|fundamental|prime)\s+)?"
+    r"(?:testament|reminder|cornerstone|catalyst|beacon|pillar|symbol|foundation|model|"
+    r"benchmark|backbone|bridge|window|gateway|hub)\b|"
+    r"boasts?\s+(?:a\b|an\b|over\b|more\s+than\b|nearly\b|\d)"
+    r")",
+    re.IGNORECASE,
+)
+_RHETORICAL_QA_HOOK_RE = re.compile(
+    r"^(?:(?:And|So|But)\s+)?"
+    r"(?:"
+    r"The\s+(?:result|catch|kicker|twist|upside|downside|payoff|problem|secret|truth|"
+    r"bottom\s+line|best\s+part|worst\s+part|fix|answer|takeaway)|"
+    r"Sound\s+familiar|"
+    r"Why\s+does\s+(?:this|that|it)\s+matter|"
+    r"What(?:'s|\s+is)\s+the\s+(?:catch|result|fix|point|kicker|twist|upside|downside|"
+    r"payoff|bottom\s+line|takeaway)|"
+    r"Here(?:'s|\s+is)\s+the\s+question"
+    r")\?$",
+    re.IGNORECASE,
+)
+_PERFORMATIVE_FRAGMENT_RE = re.compile(
+    r"^(?:"
+    r"Full\s+stop|"
+    r"Period|"
+    r"Simple\s+as\s+that|"
+    r"Nothing\s+more,\s+nothing\s+less|"
+    r"That\s+changes\s+everything|"
+    r"And\s+maybe\s+that(?:'s|\s+is)\s+the\s+point|"
+    r"Read\s+that\s+again|"
+    r"Let\s+that\s+sink\s+in"
+    r")[.!]$",
+    re.IGNORECASE,
+)
+_NOMINALIZATION_CHAIN_RE = re.compile(
+    r"\b(?:the|a|an)\s+[a-z]{4,}(?:tion|ment|ance|ence|ization)\s+of\b",
     re.IGNORECASE,
 )
 
@@ -1024,6 +1127,7 @@ def _scan_line_regex(
     masked_lines: list[str],
     raw_lines: list[str],
     normalize_quotes: bool = False,
+    strip_leading_marker: bool = False,
 ) -> list[dict[str, Any]]:
     hits: list[dict[str, Any]] = []
     for idx, mline in enumerate(masked_lines):
@@ -1032,6 +1136,8 @@ def _scan_line_regex(
         cleaned = _strip_md.mask_inline_syntax_for_tells(mline)
         if normalize_quotes:
             cleaned = cleaned.replace("\u2019", "'").replace("\u2018", "'")
+        if strip_leading_marker:
+            cleaned = _LEADING_BLOCK_MARKER_RE.sub("", cleaned)
         for m in pattern.finditer(cleaned):
             hits.append(
                 {
@@ -1040,6 +1146,204 @@ def _scan_line_regex(
                     "excerpt": _make_excerpt(raw_lines[idx]),
                 }
             )
+    return hits
+
+
+def _scan_inflated_verbs(
+    masked_lines: list[str], raw_lines: list[str]
+) -> list[dict[str, Any]]:
+    hits: list[dict[str, Any]] = []
+    for idx, mline in enumerate(masked_lines):
+        if not mline.strip():
+            continue
+        cleaned = _strip_md.mask_inline_syntax_for_tells(mline)
+        for m in _INFLATED_VERBS_RE.finditer(cleaned):
+            matched_lower = m.group(0).strip().lower()
+            if matched_lower in {"harness", "harnesses"}:
+                prefix = cleaned[: m.start()]
+                if _HARNESS_NOUN_PREFIX_RE.search(prefix):
+                    continue
+                if matched_lower == "harnesses" and not prefix.strip():
+                    continue
+            hits.append(
+                {
+                    "line": idx + 1,
+                    "match": re.sub(r"\s+", " ", matched_lower),
+                    "excerpt": _make_excerpt(raw_lines[idx]),
+                }
+            )
+    return hits
+
+
+def _detect_participial_tail_puffery(
+    posture_sentences: list[SentenceSpan],
+    full_sentences: list[SentenceSpan],
+    raw_lines: list[str],
+) -> list[dict[str, Any]]:
+    full_by_line: dict[int, list[SentenceSpan]] = {}
+    for fs in full_sentences:
+        full_by_line.setdefault(fs.line, []).append(fs)
+
+    hits: list[dict[str, Any]] = []
+    for sent in posture_sentences:
+        sent_norm = sent.text.replace("\u2019", "'").replace("\u2018", "'").strip()
+        m = _PARTICIPIAL_TAIL_RE.search(sent_norm)
+        if not m:
+            continue
+        tail = m.group(0)
+        if _MECHANISM_MARKER_RE.search(tail):
+            continue
+        # If inline code inside this sentence's trailing clause supplied a concrete
+        # mechanism (e.g., `, ensuring \`SHA-256\` digests match`), exempt it.
+        line_full_sents = full_by_line.get(sent.line, [])
+        if line_full_sents:
+            has_unanchored_full = False
+            saw_tail_in_full = False
+            for fs in line_full_sents:
+                fs_norm = fs.text.replace("\u2019", "'").replace("\u2018", "'").strip()
+                fm = _PARTICIPIAL_TAIL_RE.search(fs_norm)
+                if fm:
+                    saw_tail_in_full = True
+                    if not _MECHANISM_MARKER_RE.search(fm.group(0)):
+                        has_unanchored_full = True
+            if saw_tail_in_full and not has_unanchored_full:
+                continue
+        excerpt_src = (
+            raw_lines[sent.line - 1]
+            if 1 <= sent.line <= len(raw_lines) and raw_lines[sent.line - 1].strip()
+            else sent.text
+        )
+        hits.append(
+            {
+                "line": sent.line,
+                "match": re.sub(r"\s+", " ", tail).strip().lower(),
+                "excerpt": _make_excerpt(excerpt_src),
+            }
+        )
+    return hits
+
+
+def _detect_rhetorical_qa_pivots(
+    posture_sentences: list[SentenceSpan],
+) -> list[dict[str, Any]]:
+    hits: list[dict[str, Any]] = []
+    for idx in range(len(posture_sentences) - 1):
+        cur = posture_sentences[idx]
+        nxt = posture_sentences[idx + 1]
+        if len(cur.words) > 8:
+            continue
+        cur_norm = cur.text.replace("\u2019", "'").replace("\u2018", "'").strip()
+        nxt_norm = nxt.text.strip()
+        if not cur_norm.endswith("?") or nxt_norm.endswith("?") or not nxt.words:
+            continue
+        if _RHETORICAL_QA_HOOK_RE.match(cur_norm):
+            hits.append(
+                {
+                    "line": cur.line,
+                    "match": re.sub(r"\s+", " ", cur_norm).lower(),
+                    "excerpt": _make_excerpt(f"{cur.text} {nxt.text}"),
+                }
+            )
+    return hits
+
+
+def _detect_performative_fragments(
+    posture_sentences: list[SentenceSpan], raw_lines: list[str]
+) -> list[dict[str, Any]]:
+    hits: list[dict[str, Any]] = []
+    for sent in posture_sentences:
+        sent_norm = sent.text.replace("\u2019", "'").replace("\u2018", "'").strip()
+        if _PERFORMATIVE_FRAGMENT_RE.match(sent_norm):
+            excerpt_src = (
+                raw_lines[sent.line - 1]
+                if 1 <= sent.line <= len(raw_lines) and raw_lines[sent.line - 1].strip()
+                else sent.text
+            )
+            hits.append(
+                {
+                    "line": sent.line,
+                    "match": re.sub(r"\s+", " ", sent_norm).lower(),
+                    "excerpt": _make_excerpt(excerpt_src),
+                }
+            )
+    return hits
+
+
+def _detect_split_contrastive_pivots(
+    posture_sentences: list[SentenceSpan],
+) -> list[dict[str, Any]]:
+    hits: list[dict[str, Any]] = []
+    n = len(posture_sentences)
+    idx = 0
+    while idx < n - 1:
+        cur = posture_sentences[idx]
+        nxt = posture_sentences[idx + 1]
+        cur_norm = cur.text.replace("\u2019", "'").replace("\u2018", "'").strip()
+        nxt_norm = nxt.text.replace("\u2019", "'").replace("\u2018", "'").strip()
+
+        # Staccato negation runs (`Not X. Not Y. [Z.]`)
+        if (
+            len(cur.words) <= 10
+            and len(nxt.words) <= 10
+            and _STACCATO_NOT_SENT_RE.match(cur_norm)
+            and _STACCATO_NOT_SENT_RE.match(nxt_norm)
+        ):
+            run = [cur, nxt]
+            j = idx + 2
+            while j < n:
+                cand = posture_sentences[j]
+                cand_norm = (
+                    cand.text.replace("\u2019", "'").replace("\u2018", "'").strip()
+                )
+                if len(cand.words) <= 10 and _STACCATO_NOT_SENT_RE.match(cand_norm):
+                    run.append(cand)
+                    j += 1
+                else:
+                    break
+            joined_norm = " ".join(
+                s.text.replace("\u2019", "'").replace("\u2018", "'").strip()
+                for s in run
+            )
+            joined_raw = " ".join(s.text for s in run)
+            hits.append(
+                {
+                    "line": cur.line,
+                    "match": re.sub(r"\s+", " ", joined_norm).strip().lower(),
+                    "excerpt": _make_excerpt(joined_raw),
+                }
+            )
+            idx = j
+            continue
+
+        # Two-sentence negative parallelisms (`This isn't a X. It's a Y.` / `not simply X. Instead, it is Y.`)
+        if cur_norm.endswith(".") and not nxt_norm.endswith("?"):
+            is_mod_reframe = bool(
+                _SPLIT_PIVOT_NEG_MOD_RE.search(cur_norm)
+                and _SPLIT_PIVOT_S2_REFRAME_RE.match(nxt_norm)
+            )
+            is_instead_copula = bool(
+                _SPLIT_PIVOT_COPULA_NEG_RE.search(cur_norm)
+                and _SPLIT_PIVOT_S2_INSTEAD_RE.match(nxt_norm)
+            )
+            is_dem_mirror = bool(
+                len(cur.words) <= 14
+                and _SPLIT_PIVOT_S1_DEM_NEG_RE.match(cur_norm)
+                and _SPLIT_PIVOT_S2_PASSIVE_RE.match(nxt_norm)
+            )
+            if is_mod_reframe or is_instead_copula or is_dem_mirror:
+                pair_norm = f"{cur_norm} {nxt_norm}"
+                pair_raw = f"{cur.text} {nxt.text}"
+                hits.append(
+                    {
+                        "line": cur.line,
+                        "match": re.sub(r"\s+", " ", pair_norm).strip().lower(),
+                        "excerpt": _make_excerpt(pair_raw),
+                    }
+                )
+                idx += 2
+                continue
+
+        idx += 1
     return hits
 
 
@@ -1199,6 +1503,7 @@ def analyze_text(
     anchor_count = _count_anchors(sentences)
     hedge_count = len(_HEDGE_RE.findall(norm_text_for_rates))
     booster_count = len(_BOOSTER_RE.findall(norm_text_for_rates))
+    nominalization_count = len(_NOMINALIZATION_CHAIN_RE.findall(norm_text_for_rates))
 
     def per_100w(cnt: int) -> float:
         return round(cnt * 100.0 / word_count, 2) if word_count > 0 else 0.0
@@ -1212,7 +1517,7 @@ def analyze_text(
             importance_without_mechanism.append(
                 {
                     "line": sent.line,
-                    "trigger": imp_match.group(0).lower(),
+                    "trigger": re.sub(r"\s+", " ", imp_match.group(0)).strip().lower(),
                     "excerpt": _make_excerpt(sent.text),
                 }
             )
@@ -1256,15 +1561,30 @@ def analyze_text(
     bold_restatement_bullets = _detect_bold_restatement_bullets(masked_lines, raw_lines)
     false_scales = _detect_false_scales(masked_lines, raw_lines)
     ai_tell_words = _scan_line_regex(_AI_TELL_WORDS_RE, masked_lines, raw_lines)
-    inflated_style_verbs = _scan_line_regex(
-        _INFLATED_VERBS_RE, masked_lines, raw_lines
-    )
+    inflated_style_verbs = _scan_inflated_verbs(masked_lines, raw_lines)
     tech_buzz_nouns = _scan_line_regex(_TECH_BUZZ_NOUNS_RE, masked_lines, raw_lines)
     framing_theater = _scan_line_regex(
-        _FRAMING_THEATER_RE, masked_lines, raw_lines, normalize_quotes=True
+        _FRAMING_THEATER_RE,
+        masked_lines,
+        raw_lines,
+        normalize_quotes=True,
+        strip_leading_marker=True,
     )
     contrastive_pivots = _scan_line_regex(
         _CONTRASTIVE_PIVOT_RE, masked_lines, raw_lines, normalize_quotes=True
+    )
+    contrastive_pivots.extend(_detect_split_contrastive_pivots(posture_sentences))
+    contrastive_pivots.sort(key=lambda item: int(item["line"]))
+
+    participial_tail_puffery = _detect_participial_tail_puffery(
+        posture_sentences, sentences, raw_lines
+    )
+    copula_avoidance = _scan_line_regex(
+        _COPULA_AVOIDANCE_RE, masked_lines, raw_lines, normalize_quotes=True
+    )
+    rhetorical_qa_pivots = _detect_rhetorical_qa_pivots(posture_sentences)
+    performative_fragments = _detect_performative_fragments(
+        posture_sentences, raw_lines
     )
     stacked_questions = _detect_stacked_questions(sentences)
     passive_count = _count_passive_voice(sentences)
@@ -1308,9 +1628,14 @@ def analyze_text(
             "tech_buzz_nouns": tech_buzz_nouns,
             "framing_theater": framing_theater,
             "contrastive_pivots": contrastive_pivots,
+            "participial_tail_puffery": participial_tail_puffery,
+            "copula_avoidance": copula_avoidance,
+            "rhetorical_qa_pivots": rhetorical_qa_pivots,
+            "performative_fragments": performative_fragments,
             "stacked_questions": stacked_questions,
             "passive_voice_per_100w": per_100w(passive_count),
             "adverbs_per_100w": per_100w(adverb_count),
+            "nominalizations_per_100w": per_100w(nominalization_count),
         },
     }
 
@@ -1346,7 +1671,8 @@ def format_human_report(report: dict[str, Any]) -> str:
             f"hedges={sub['hedges_per_100w']}/100w, "
             f"boosters={sub['boosters_per_100w']}/100w, "
             f"passive={mech['passive_voice_per_100w']}/100w, "
-            f"adverbs={mech['adverbs_per_100w']}/100w"
+            f"adverbs={mech['adverbs_per_100w']}/100w, "
+            f"nominalizations={mech['nominalizations_per_100w']}/100w"
         ),
     ]
 
@@ -1383,6 +1709,10 @@ def format_human_report(report: dict[str, Any]) -> str:
         ("tech_buzz_nouns", "tech_buzz_noun"),
         ("framing_theater", "framing_theater"),
         ("contrastive_pivots", "contrastive_pivot"),
+        ("participial_tail_puffery", "participial_tail_puffery"),
+        ("copula_avoidance", "copula_avoidance"),
+        ("rhetorical_qa_pivots", "rhetorical_qa_pivot"),
+        ("performative_fragments", "performative_fragment"),
         ("stacked_questions", "stacked_questions"),
     ]
     for key, label in labeled_categories:

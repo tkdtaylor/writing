@@ -309,9 +309,14 @@ class TestTask004ProseLintAndStripper(unittest.TestCase):
             "tech_buzz_nouns",
             "framing_theater",
             "contrastive_pivots",
+            "participial_tail_puffery",
+            "copula_avoidance",
+            "rhetorical_qa_pivots",
+            "performative_fragments",
             "stacked_questions",
             "passive_voice_per_100w",
             "adverbs_per_100w",
+            "nominalizations_per_100w",
         }
         self.assertEqual(
             set(slop_report["mechanics_and_tells"].keys()), expected_mech_keys
@@ -334,6 +339,7 @@ class TestTask004ProseLintAndStripper(unittest.TestCase):
         self.assertGreaterEqual(len(mech["tech_buzz_nouns"]), 3)
         self.assertGreaterEqual(len(mech["framing_theater"]), 2)
         self.assertGreaterEqual(len(mech["contrastive_pivots"]), 2)
+        self.assertGreaterEqual(len(mech["copula_avoidance"]), 1)
         self.assertGreaterEqual(len(mech["stacked_questions"]), 1)
         self.assertGreater(mech["passive_voice_per_100w"], 0.0)
         self.assertGreater(mech["adverbs_per_100w"], 0.0)
@@ -358,8 +364,13 @@ class TestTask004ProseLintAndStripper(unittest.TestCase):
         self.assertEqual(clean_mech["tech_buzz_nouns"], [])
         self.assertEqual(clean_mech["framing_theater"], [])
         self.assertEqual(clean_mech["contrastive_pivots"], [])
+        self.assertEqual(clean_mech["participial_tail_puffery"], [])
+        self.assertEqual(clean_mech["copula_avoidance"], [])
+        self.assertEqual(clean_mech["rhetorical_qa_pivots"], [])
+        self.assertEqual(clean_mech["performative_fragments"], [])
         self.assertEqual(clean_mech["stacked_questions"], [])
         self.assertEqual(clean_mech["adverbs_per_100w"], 0.0)
+        self.assertEqual(clean_mech["nominalizations_per_100w"], 0.0)
 
     def test_tc_004_04_code_fence_masking_no_composite_score_and_cli_modes(
         self,
