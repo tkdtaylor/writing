@@ -15,7 +15,7 @@ Weak model-generated drafts fail before sentence polish. Polish comes last. Stan
 - **Substance before surface.** Every workflow verifies factual claims, causal qualifiers, speaker attributions, and concrete human or system mechanisms before adjusting phrasing. Missing numbers, owners, dates, or sources become explicit `[TK: specific question]` markers rather than invented details.
 - **Reader-load reduction.** Structural rules front-load conclusions, preconditions, and safety warnings, keep one job per section, and cut throat-clearing warm-ups plus repetitive closing recaps so busy or skeptical readers finish with less effort.
 - **Deterministic mode and register separation.** [SKILL.md](SKILL.md) routes the active workflow mode (`draft`, `edit`, `review`, `lint`) separately from the target genre register. Each turn loads only the active mode guide and one genre guide (`<= 1,500` words per file, `<= 10,000` words combined). Procedural clarity stays sharp in runbooks without flattening essays, and longform craft stays alive in essays without weakening technical docs.
-- **Diagnostics without a composite AI score.** The stripper in [scripts/strip_markdown.py](scripts/strip_markdown.py) isolates reader-visible prose from Markdown syntax. Next, [scripts/prose_lint.py](scripts/prose_lint.py) reports cadence variation, `MATTR-50` diversity, 3-gram repeats, anchor ratios, and line-numbered tells without a composite AI score. Flourish and baseline checks flag `participial_tail_puffery`, `copula_avoidance`, `rhetorical_qa_pivots`, `performative_fragments`, `nominalizations_per_100w`, `shorthand_ambiguities`, `exclamation_marks`, and `false_agency`.
+- **Diagnostics without a composite AI score.** The stripper in [scripts/strip_markdown.py](scripts/strip_markdown.py) isolates reader-visible prose from Markdown syntax. Next, [scripts/prose_lint.py](scripts/prose_lint.py) reports cadence variation, `MATTR-50` diversity, 3-gram repeats, anchor ratios, and line-numbered tells without a composite AI score. Flourish and baseline checks flag `participial_tail_puffery`, `copula_avoidance`, `rhetorical_qa_pivots`, `performative_fragments`, `nominalizations_per_100w`, `shorthand_ambiguities`, `exclamation_marks`, and `false_agency`. Humanizer and dash-bypass checks also catch spaced `--` or en-dash (`U+2013`) substitutes, `chatbot_artifacts`, and `meta_and_strawman_tells`.
 
 ## Architecture and routing flow
 
@@ -52,8 +52,8 @@ Before loading any style rule, [SKILL.md](SKILL.md) enforces six universal safeg
 | Mode | Slash Command | Loaded Guide or Tooling | Deliverable Contract |
 |------|---------------|-------------------------|----------------------|
 | `mode=draft` | `/write-draft` ([commands/write-draft.md](commands/write-draft.md)) | [references/draft-and-brief.md](references/draft-and-brief.md) + 1 genre guide | Restates reader and job, asks up to 5 perspective questions when primary material is thin, marks gaps with `[TK: ...]`, and places a brief provenance note outside the draft |
-| `mode=edit` | `/write-edit` ([commands/write-edit.md](commands/write-edit.md)) | [references/edit-and-anti-slop.md](references/edit-and-anti-slop.md) + 1 genre guide | Inventories claims and operational syntax first, then executes a single 5-step pass repairing truth, mechanisms, structure, sentence mechanics, and human cadence |
-| `mode=review` | `/write-review` ([commands/write-review.md](commands/write-review.md)) | [references/review-rubric.md](references/review-rubric.md) + [references/edit-and-anti-slop.md](references/edit-and-anti-slop.md) + 1 genre guide | Strictly read-only critique delivering a candid piece-level diagnosis plus `keep`, `revise`, `ask-author`, and `cut` passage verdicts without rewriting files |
+| `mode=edit` | `/write-edit` ([commands/write-edit.md](commands/write-edit.md)) | [references/edit-and-anti-slop.md](references/edit-and-anti-slop.md) + 1 genre guide | Inventories claims and operational syntax, runs 3-way edit triage (`slop/notes`, `real voice`, `point edit`), applies the `Leave-it-alone` test and declined-claim `[TK: ...]` unlocks, and executes one 5-step rewrite pass |
+| `mode=review` | `/write-review` ([commands/write-review.md](commands/write-review.md)) | [references/review-rubric.md](references/review-rubric.md) + [references/edit-and-anti-slop.md](references/edit-and-anti-slop.md) + 1 genre guide | Strictly read-only critique delivering a candid piece-level diagnosis, `keep`, `revise`, `ask-author`, and `cut` verdicts, and an optional zero-context cold-reader pass without rewriting files |
 | `mode=lint` | `/write-lint` ([commands/write-lint.md](commands/write-lint.md)) | [scripts/strip_markdown.py](scripts/strip_markdown.py) + [scripts/prose_lint.py](scripts/prose_lint.py) | Diagnostic-only inspection of cadence variation, lexical diversity, anchor vs posture ratios, and line-numbered mechanical and flourish tells |
 
 Natural-language prompts work identically in harnesses without slash commands:
@@ -73,10 +73,10 @@ Step 2 classifies each piece into one primary register and loads the matching ge
 
 | Genre Guide | Registers | Media and Structural Coverage |
 |-------------|-----------|-------------------------------|
-| [references/technical-and-docs.md](references/technical-and-docs.md) | `Guide`, `Reference`, `Explanation`, `Argument` (RFC/ADR) | Diataxis mode purity (`Tutorial`, `How-to`, `Reference`, `Explanation`), developer style (`<= 20`-word procedural steps, warnings above guarded commands), ASD-STE100 simplified procedural rules, Global English, READMEs, RFCs and ADRs, and pull-request briefings |
-| [references/business-and-executive.md](references/business-and-executive.md) | `Decision/Update` | BLUF memos, self-contained decision briefs, explicit epistemic tags (`measured`, `inferred`, `open`), four-part metric vetting (`unit`, `sample or runs`, `baseline`, `limiter`), status updates, and action-oriented emails |
+| [references/technical-and-docs.md](references/technical-and-docs.md) | `Guide`, `Reference`, `Explanation`, `Argument` (RFC/ADR) | Diataxis mode purity (`Tutorial`, `How-to`, `Reference`, `Explanation`), developer style (`<= 20`-word procedural steps, warnings above guarded commands), ASD-STE100 simplified procedural rules, Global English, READMEs, RFCs and ADRs, blameless postmortems, changelogs and release notes, and pull-request briefings |
+| [references/business-and-executive.md](references/business-and-executive.md) | `Decision/Update` | BLUF memos, self-contained decision briefs, explicit epistemic tags (`measured`, `inferred`, `open`), four-part metric vetting (`unit`, `sample or runs`, `baseline`, `limiter`), 3P updates (`Progress`, `Plans`, `Problems`), thread reply discipline (`No context-rebuilding`), status updates, and action-oriented emails |
 | [references/one-pager-and-six-pager.md](references/one-pager-and-six-pager.md) | `Decision/Update`, `Argument` | Reversible vs irreversible door-type selection, 5-section One-Pagers (`350` to `550` words), 7-part Six-Pagers with sacrifice-bearing tenets and input vs output metrics, Working Backwards `PR/FAQs`, `80%+` causal prose density, and the two-way Appendix contract |
-| [references/longform-and-persuasion.md](references/longform-and-persuasion.md) | `Argument`, `Persuasion/Copy`, `Narrative/Oral` | Point-of-view essays with fair steelman objections, landing and launch copy anchored in checkable mechanisms, UX microcopy (errors, empty states, confirmations), speeches and slide decks, progressive visual diagrams, and creative narrative |
+| [references/longform-and-persuasion.md](references/longform-and-persuasion.md) | `Argument`, `Persuasion/Copy`, `Narrative/Oral` | Point-of-view essays with fair steelman objections, landing and launch copy anchored in checkable mechanisms, Voice-of-Customer phrasing, claim unlocks, and punch rationing, UX microcopy (errors, empty states, confirmations), speeches and slide decks, progressive visual diagrams, and creative narrative |
 
 Only an `Argument` owes a contrarian or non-obvious thesis. Guides, references, architecture explanations, and operational briefs never force artificial hot takes.
 
@@ -222,12 +222,12 @@ writing/
 │   └── write-lint.md               #   /write-lint   -> mode=lint
 ├── references/                     # On-demand workflow & genre guides (<1,500 words each, <=10,000 combined)
 │   ├── draft-and-brief.md          #   Goal restatement, perspective interview, [TK] markers, provenance
-│   ├── edit-and-anti-slop.md       #   Single-pass 5-step rewrite, diagnostic tests, anti-slop & flourish rules
-│   ├── review-rubric.md            #   Read-only critique contract (keep / revise / ask-author / cut)
-│   ├── technical-and-docs.md       #   Diataxis, developer style, STE, Global English, READMEs, RFCs, PRs
-│   ├── business-and-executive.md   #   BLUF memos, decision briefs, epistemic labels, metric vetting, email
+│   ├── edit-and-anti-slop.md       #   3-way edit triage, Leave-it-alone test, 5-step rewrite & anti-slop
+│   ├── review-rubric.md            #   Read-only critique contract (keep / revise / ask-author / cut) & cold-reader
+│   ├── technical-and-docs.md       #   Diataxis, STE, Global English, READMEs, RFCs, postmortems, changelogs
+│   ├── business-and-executive.md   #   BLUF memos, decision briefs, metric vetting, 3P updates, reply discipline
 │   ├── one-pager-and-six-pager.md  #   Door-type matrix, 5-part one-pagers, 7-part six-pagers, PR/FAQs
-│   └── longform-and-persuasion.md  #   Essays, landing copy, UX microcopy, speeches/slides, narrative
+│   └── longform-and-persuasion.md  #   Essays, VoC landing copy, claim unlocks, UX microcopy, speeches, narrative
 ├── scripts/                        # Zero-dependency Python 3.10+ CLIs and repository workflow tools
 │   ├── strip_markdown.py           #   Markdown/code/table/frontmatter stripper
 │   ├── prose_lint.py               #   Cadence, lexical diversity, anchor/posture, mechanical & profile linter
@@ -262,10 +262,12 @@ writing/
 
 ## Prior art and inspiration
 
-`writing` stands on ideas explored by two open-source writing projects:
+`writing` builds on ideas explored across several open-source writing and editorial projects:
 
 - Addy Osmani's [`clarity`](https://github.com/addyosmani/clarity) inspired the substance-before-surface editorial order, primary-source perspective interviews before long original drafts, `[TK]` placeholder discipline, and external provenance notes.
 - Lauren Tan's [`pstack`](https://github.com/cursor/plugins/tree/main/pstack) inspired the reader-load framing, Diataxis documentation mode separation, self-contained decision-brief schemas, metric vetting rules, and mechanical anti-slop checks.
+- [`blader/humanizer`](https://github.com/blader/humanizer) and Wikipedia's *Signs of AI Writing* (`WP:AI`) informed the chatbot-residue, cutoff-hedge, meta-narration, phantom-strawman, and dash-bypass anti-slop patterns.
+- [`anthropics/skills`](https://github.com/anthropics/skills) (`doc-coauthoring`), [`coreyhaines31/marketingskills`](https://github.com/coreyhaines31/marketingskills), and [`vidanov/writing-craft-skill`](https://github.com/vidanov/writing-craft-skill) informed the zero-context cold-reader review pass, Voice-of-Customer and claim-unlock copy rules, and 3-way edit triage.
 
 Every skill prompt, reference guide, slash command, Python diagnostic script, evaluation rubric, and calibration sample in `writing` is clean-room authored under the MIT License.
 

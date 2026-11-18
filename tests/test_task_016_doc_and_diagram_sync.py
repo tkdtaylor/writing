@@ -36,6 +36,8 @@ ALL_TELL_LIST_KEYS = (
     "shorthand_ambiguities",
     "exclamation_marks",
     "false_agency",
+    "chatbot_artifacts",
+    "meta_and_strawman_tells",
 )
 
 HYGIENE_TARGET_FILES = (

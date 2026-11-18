@@ -118,5 +118,22 @@
   {
     "query": "Diagnose why Linux transparent hugepages allocation fails with ENOMEM on c6i.4xlarge Kubernetes nodes when launching JVM worker pods with -XX:+UseLargePages.",
     "should_trigger": false
+  },
+  {
+    "query": "Turn these PagerDuty timeline timestamps and Slack incident notes from today's 42-minute checkout outage into a blameless SRE postmortem separating root cause from trigger with owned action items.",
+    "should_trigger": true
+  },
+  {
+    "query": "Draft human-focused Keep a Changelog release notes for v2.4.0 from these merged PR notes, putting the breaking CLI flag migration path at the top instead of dumping raw git commits.",
+    "should_trigger": true
+  },
+  {
+    "query": "Write a GitHub Actions release.yml workflow and bash script that verifies signed annotated git tags, builds Linux amd64 and arm64 Go binaries with goreleaser, and uploads SHA-256 checksums.",
+    "should_trigger": false
+  },
+  {
+    "query": "Write a jq filter and awk pipeline over 12 GB of gzipped Envoy access logs to group HTTP 502 spikes by upstream pod IP and 10-second timestamp bucket.",
+    "should_trigger": false
   }
 ]
+

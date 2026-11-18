@@ -21,15 +21,15 @@ SKILL.md                     <- skill entry point (<1,500 words): mode + genre r
 commands/                    <- optional Claude Code slash commands (/write-draft, /write-edit, /write-review, /write-lint)
 references/                  <- on-demand workflow & genre guides (<1,500 words each)
   draft-and-brief.md           co-writing, goal restatement, perspective interview, [TK] markers, provenance
-  edit-and-anti-slop.md        single-pass rewrite order, diagnostic tests, anti-slop catalog, craft restoration
-  review-rubric.md             read-only critique schema (keep / revise / ask-author / cut)
-  technical-and-docs.md        Diataxis, developer style, STE, Global English, READMEs, RFCs/ADRs, PR briefs
-  business-and-executive.md    BLUF memos, decision briefs, epistemic labels, metric vetting, emails
+  edit-and-anti-slop.md        3-way edit triage, Leave-it-alone rule, declined-claim unlocks, single-pass anti-slop
+  review-rubric.md             read-only critique schema (keep / revise / ask-author / cut), zero-context cold-reader pass
+  technical-and-docs.md        Diataxis, STE, Global English, READMEs, RFCs, blameless postmortems, Keep-a-Changelog release notes
+  business-and-executive.md    BLUF memos, decision briefs, metric vetting, 3P updates, thread reply discipline
   one-pager-and-six-pager.md   door-type matrix, 5-part one-pagers, 7-part six-pagers, PR/FAQs, appendix contract
-  longform-and-persuasion.md   essays, landing copy, UX microcopy, speeches/slides, progressive visuals, narrative
+  longform-and-persuasion.md   essays, VoC landing copy, claim unlocks, UX microcopy, speeches/slides, narrative
 scripts/                     <- zero-dep Python 3 CLIs + repo workflow scripts
   strip_markdown.py            strips Markdown/code/tables/frontmatter to clean reader-visible prose
-  prose_lint.py                stylometric, mechanical, and flourish prose diagnostics (no composite detector score)
+  prose_lint.py                stylometric, flourish, dash-bypass, chatbot_artifacts & meta_and_strawman_tells diagnostics
   validate_skill.py            enforces word budgets (<=1,500/file, <=10,000 combined), routing, links, and hygiene
   package_skill.py             verifies, archives (dist/), and cleanly installs the runtime skill payload
   start-task.sh / finish-task.sh / check-task-state.sh / verify-worktree-isolation.sh
@@ -73,7 +73,7 @@ python3 scripts/package_skill.py --install-to <dir>  # install only the runtime 
 python3 scripts/sync-agy-skills.py            # regenerate .agents/ adapters after .claude/ changes
 ```
 
-Note that `prose_lint.py --profile` (alias `--mode`) supports `default`, `technical`, `memo`, `one-pager`, `six-pager`, and `narrative`.
+Note that `prose_lint.py --profile` (alias `--mode`) supports `default`, `technical`, `memo`, `one-pager`, `six-pager`, and `narrative`. It also flags spaced `--` or en-dash (`U+2013`) dash-bypass substitutes, `chatbot_artifacts`, and `meta_and_strawman_tells` without emitting a composite AI score.
 
 ## Conventions and house prose rules
 

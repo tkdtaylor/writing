@@ -295,6 +295,52 @@
         "Preserves exact source numbers (14,200 dropped batches, 68 tickets, 11 hours/week, $190/month Option A vs $640/month Option B vs $0 Status Quo, 50 RPS cap)",
         "Removes all prose em dashes, emoji bullets, copula avoidance, trailing `-ing` puffery, rhetorical Q&A pivots, performative fragments, and unanchored `without sacrificing` claims"
       ]
+    },
+    {
+      "id": 20,
+      "eval_name": "blameless-postmortem-and-keepachangelog-release-note",
+      "category": "medium_fit",
+      "mode": "draft",
+      "prompt": "mode=draft Using only the incident and deploy notes below, draft two short deliverables: (1) a blameless SRE incident postmortem and (2) the `payout-proxy` `v2.4.0` (`2026-10-16`) Keep-a-Changelog release note.\n\nIncident notes (`2026-10-14`, `SEV-2`):\n- Window: `2026-10-14 09:12 UTC` to `09:49 UTC` (`37` minutes); `3.8%` of `POST /v2/payouts` requests returned `HTTP 504` (`1,420` failed payout calls).\n- What happened: on-call engineer Samir Patel ran routine regional config reload `deploy #4418` (`09:12 UTC`), refreshing upstream worker endpoints. Stale node `10.24.8.19` dropped SYN packets while `payout-proxy` lacked a socket `connect_timeout` default (left unbounded).\n- Timeline: `09:12 UTC` `deploy #4418` reloaded endpoints; `09:15 UTC` `PayoutHigh5xx` paged on-call; `09:21 UTC` engineer engaged and traced hung SYN sockets to `10.24.8.19`; `09:34 UTC` drained `10.24.8.19` and set `connect_timeout=1500ms`; `09:49 UTC` queue cleared and `HTTP 504` rate returned to `0.0%`.\n- Action items: enforce `1500ms` `connect_timeout` schema default in `payout-proxy` (Owner: Payments Infra, tracking ticket ID still needed); add dead-host SYN blackhole check in staging (Owner: SRE, ticket `REL-904`).\n\nRaw git commits for `payout-proxy` `v2.4.0` (`2026-10-16`):\n- `feat!: rename --upstream-wait to --connect-timeout-ms (default 1500)`\n- `fix: abort half-open TCP sockets during upstream endpoint reload`\n- `chore: bump golangci-lint and reorganize internal test mocks`\n- `sec: reject TLS 1.1 client handshakes on admin port 9091`",
+      "expected_output": "Produces a blameless SRE postmortem opening with user impact and the 2026-10-14 09:12 to 09:49 UTC SEV-2 window, separating systemic Root cause (missing connect_timeout default) from proximate Trigger (routine deploy #4418) without blaming Samir Patel, listing the HH:MM UTC timeline and owned action items with [TK: ticket ID] alongside REL-904, followed by a human-focused Keep-a-Changelog v2.4.0 entry that puts the breaking --upstream-wait -> --connect-timeout-ms migration path first, omits internal lint/mock chores, and appends external Provenance.",
+      "files": [],
+      "assertions": [
+        "Opens the blameless postmortem with user-visible impact (`3.8%` `POST /v2/payouts` `HTTP 504` rate, `1,420` failed calls), `SEV-2` severity, and the `2026-10-14 09:12 UTC` to `09:49 UTC` window",
+        "Separates the latent systemic Root cause (unbounded socket `connect_timeout` in `payout-proxy`) from the proximate Trigger (routine config reload `deploy #4418`) without blaming the individual operator",
+        "Includes the `HH:MM UTC` detection-to-recovery timeline and owned systemic Action items, preserving `REL-904` and marking the missing Payments Infra ticket with `[TK: ticket ID]`",
+        "Formats the `v2.4.0` (`2026-10-16`) Keep-a-Changelog release note for human upgraders with the breaking `--upstream-wait` to `--connect-timeout-ms` migration steps above `Fixed` and `Security` entries, omits internal `golangci-lint`/mock chores, and places Provenance outside the deliverable"
+      ]
+    },
+    {
+      "id": 21,
+      "eval_name": "edit-triage-preserves-founder-voice-and-claim-unlock",
+      "category": "false_positive_restraint",
+      "mode": "edit",
+      "prompt": "mode=edit Tighten this rough landing-page hero and body section for `CancelKit` without killing my founder voice. Facts we actually have so far: 9 SaaS beta teams installed our 2-line `<script>` snippet using a restricted Stripe read key, and 6 of those 9 teams had at least one canceling customer pick a 30-day pause in week one. We do NOT have long-term churn percentages yet.\n\nDraft:\nMost retention tools make you ship a whole second billing portal just to ask why someone clicked cancel. We built CancelKit so two-person SaaS teams can wire up pause and plan-downgrade offers before lunch and get back to building product stuff.\n\nNo setup call, no templates, no spreadsheets. CancelKit cuts churn 45% across every SaaS vertical in today's fast-paced subscription landscape.",
+      "expected_output": "Applies 3-way edit triage (`real voice`) and the Leave-it-alone rule: keeps the working founder sentences and casual words (`ship`, `stuff`) intact, rewrites the stacked negation chain (`No setup call, no templates, no spreadsheets`) into concrete positive setup steps (pasting the 2-line `<script>` snippet with a restricted Stripe read key), softens the unsupported 'cuts churn 45%' claim to the verifiable 6-of-9 beta pause result, and names the exact `[TK: cohort export ...]` evidence needed to unlock a percentage churn claim.",
+      "files": [],
+      "assertions": [
+        "Applies 3-way edit triage (`real voice`) and the `Leave-it-alone` test by preserving the founder's working opening sentences and casual vocabulary (`ship`, `stuff`) rather than corporate synonyms",
+        "Rewrites the stacked negation list (`No setup call, no templates, no spreadsheets`) into concrete positive workflow actions using the supplied 2-line `<script>` snippet and restricted Stripe read key",
+        "Replaces the unsupported `cuts churn 45% across every SaaS vertical` claim plus `fast-paced subscription landscape` filler with the checkable 6-of-9 beta result and names the exact `[TK: cohort export]` unlock needed for a stronger churn metric",
+        "Contains zero prose em dashes, spaced double-hyphen substitutes, chatbot wrapper phrases, or fabricated testimonials"
+      ]
+    },
+    {
+      "id": 22,
+      "eval_name": "cold-reader-rfc-review-and-reply-context-discipline",
+      "category": "mode_boundary",
+      "mode": "review",
+      "prompt": "mode=review Run a read-only critique including a zero-context cold-reader check on this excerpt from `RFC-031`, and also critique my drafted PR comment reply to Reviewer Nina below.\n\n# RFC-031: Cross-Region Tenant Failover\n\n## Summary\nWhen primary region health degrades, `failoverd` triggers automatic 30-second DNS promotion for all `RPO-tier-1` tenants once the quorum lease witness converges.\n\n## Rollout and Operations\nOperators must obtain manual Incident Commander sign-off in `#sev-bridge` before any `RPO-tier-1` DNS cutover executes.\n\n---\nReviewer Nina's PR comment on line 42:\n> Should failed lease renewals page Tier-1 SRE immediately or wait two missed heartbeats?\n\nMy drafted reply to Nina:\n> Thanks for reviewing RFC-031 on Cross-Region Tenant Failover, Nina. As background, RFC-031 proposes moving `RPO-tier-1` tenants across regions when health degrades, and you asked whether failed lease renewals should page Tier-1 SRE immediately or wait for two missed heartbeats. After checking our alert thresholds, we wait two missed heartbeats (20s) per `alerts/leases.yaml`.",
+      "expected_output": "Stays strictly read-only in mode=review using Piece-level diagnosis and Passage-level findings, executes a zero-context cold-reader pass surfacing unanswered reader questions, undefined terms (`RPO-tier-1`, `quorum lease witness`, `health degrades` threshold), and the Summary vs Rollout contradiction (automatic 30-second promotion vs manual Incident Commander sign-off), and flags `reply context-rebuilding` on the PR comment reply so line one leads directly with the two-heartbeat (`20s`, `alerts/leases.yaml`) answer.",
+      "files": [],
+      "assertions": [
+        "Remains strictly read-only in `mode=review` using `Piece-level diagnosis` and `Passage-level findings` (`keep`, `revise`, `ask-author`, `cut`) without modifying files or outputting a rewritten RFC",
+        "Runs the zero-context cold-reader check by surfacing target-reader comprehension questions, unstated assumptions (`RPO-tier-1`, `quorum lease witness`, health degradation threshold), and the Summary vs Rollout promotion contradiction",
+        "Flags `reply context-rebuilding` on the drafted PR comment reply, instructing the author to open line one with the direct two-heartbeat (`20s`) answer and `alerts/leases.yaml` link instead of repeating Nina's question and RFC background",
+        "Contains zero prose em dashes or spaced double-hyphen substitutes"
+      ]
     }
   ]
 }
+
