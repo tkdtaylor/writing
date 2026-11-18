@@ -81,6 +81,8 @@ FORBIDDEN_PAYLOAD_FILES = (
     "scripts/package_skill.py",
 )
 
+_UNSAFE_CLEAN_COLLECTION_NAMES = frozenset({"skills", "commands", "agents", "plugins"})
+
 
 def _is_executable_payload_file(rel_posix: str, src: Path) -> bool:
     """Return True when a payload file should receive 0o755 mode."""
@@ -316,10 +318,31 @@ def install_payload(
     clean: bool = False,
 ) -> Path:
     """Install only the clean runtime payload into target_dir."""
-    if target_dir.exists() and not target_dir.is_dir():
+    if (target_dir.exists() or target_dir.is_symlink()) and not target_dir.is_dir():
         raise NotADirectoryError(f"install target is not a directory: {target_dir}")
-    if target_dir.resolve() == root.resolve():
+
+    root_resolved = root.resolve()
+    target_resolved = target_dir.resolve()
+    try:
+        home_resolved: Path | None = Path.home().resolve()
+    except (RuntimeError, OSError):
+        home_resolved = None
+
+    if target_resolved == Path("/"):
+        raise OSError("install target must not be the filesystem root '/'")
+    if home_resolved is not None and target_resolved == home_resolved:
+        raise OSError(f"install target must not be the home directory: {home_resolved}")
+    if target_resolved == root_resolved:
         raise OSError("install target must not be the source repository root")
+    if root_resolved.is_relative_to(target_resolved):
+        raise OSError(
+            f"install target must not be an ancestor of the source repository root: {target_dir}"
+        )
+    if clean and target_resolved.name in _UNSAFE_CLEAN_COLLECTION_NAMES:
+        raise OSError(
+            f"refusing --clean on multi-skill collection directory '{target_resolved.name}'; "
+            f"specify a skill subdirectory such as '{target_dir / ARCHIVE_ROOT_NAME}'"
+        )
 
     target_dir.mkdir(parents=True, exist_ok=True)
     expected_set = set(payload_rel_paths)
@@ -336,7 +359,7 @@ def install_payload(
             for fname in filenames:
                 fpath = cur_path / fname
                 rel = fpath.relative_to(target_dir).as_posix()
-                if rel not in expected_set:
+                if fpath.is_symlink() or rel not in expected_set:
                     fpath.unlink()
             for dname in dirnames:
                 dpath = cur_path / dname
@@ -347,8 +370,17 @@ def install_payload(
 
     for rel in payload_rel_paths:
         src = root / rel
+        rel_parts = Path(rel).parts
+        cur_parent = target_dir
+        for part in rel_parts[:-1]:
+            cur_parent = cur_parent / part
+            if cur_parent.is_symlink():
+                cur_parent.unlink()
+            cur_parent.mkdir(parents=True, exist_ok=True)
+
         dst = target_dir / rel
-        dst.parent.mkdir(parents=True, exist_ok=True)
+        if dst.is_symlink():
+            dst.unlink()
         dst.write_bytes(src.read_bytes())
         mode = 0o755 if _is_executable_payload_file(rel, src) else 0o644
         os.chmod(dst, mode)

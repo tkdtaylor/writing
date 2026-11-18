@@ -1,7 +1,7 @@
 ---
 name: spec-verifier
 description: Verify a task's implementation matches its test spec — assertion by assertion. Invoke before committing a completed task with "use the spec-verifier on task NNN" or "verify task NNN against its spec".
-model: inherit
+model: sonnet
 # model-tier: balanced — comparing spec assertions to code/tests requires judgment, not deep reasoning
 color: cyan
 tools: ["Read", "Bash", "Grep", "Glob"]

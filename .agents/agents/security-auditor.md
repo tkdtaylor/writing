@@ -7,7 +7,7 @@ description: >-
   .claude/agents/security-auditor.md)
 mainAgent: false
 subagent: true
-model: inherit
+model: pro
 tools:
   - view_file
   - write_to_file

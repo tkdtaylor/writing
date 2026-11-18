@@ -12,14 +12,14 @@ claude .                                      # start Claude Code in this projec
 
 ## Subagents
 
-Configured under `.claude/agents/` (all default to `model: inherit` with `# model-tier:` comments):
+Configured under `.claude/agents/` with `# model-tier:` comments mapped to `opus` (deep), `sonnet` (balanced), and `inherit` (fast):
 
-- **task-executor** (`fast` / `balanced`): executes a single backlog task in branch or worktree isolation under TDD.
-- **spec-verifier** (`balanced`): verifies every `TC-NNN-XX` assertion in a task's test spec before closure.
-- **code-reviewer** (`balanced`): multi-perspective review of scripts and Markdown changes.
-- **architect** (`deep`): design review, ADR drafting, spec drift audit, and fitness-function design.
-- **security-auditor** (`deep`): reviews CLI scripts and untrusted-draft prompt-injection boundaries.
-- **docs-writer** (`fast`), **qa** (`balanced`), **task-planner** (`balanced`): optional specialist roles.
+- **task-executor** (`sonnet`, `fast` / `balanced`): executes a single backlog task in branch or worktree isolation under TDD.
+- **spec-verifier** (`sonnet`, `balanced`): verifies every `TC-NNN-XX` assertion in a task's test spec before closure.
+- **code-reviewer** (`sonnet`, `balanced`): multi-perspective review of scripts and Markdown changes.
+- **architect** (`opus`, `deep`): design review, ADR drafting, spec drift audit, and fitness-function design.
+- **security-auditor** (`opus`, `deep`): reviews CLI scripts and untrusted-draft prompt-injection boundaries.
+- **docs-writer** (`inherit`, `fast`), **qa** (`sonnet`, `balanced`), **task-planner** (`sonnet`, `balanced`): optional specialist roles.
 
 ## Backlog runner commands
 

@@ -284,7 +284,7 @@ def _collect_link_check_files(root: Path) -> list[Path]:
     unique: list[Path] = []
     for p in candidates:
         rel_posix = p.relative_to(root).as_posix()
-        if rel_posix.startswith((".claude/", ".agents/", ".git/")):
+        if rel_posix.startswith(_PROSE_EXEMPT_PREFIXES):
             continue
         resolved = p.resolve()
         if resolved not in seen:
@@ -772,7 +772,15 @@ def main(argv: list[str] | None = None) -> int:
         print(f"error: root directory not found: {args.root}", file=sys.stderr)
         return 2
 
-    result = validate_repo(root)
+    try:
+        result = validate_repo(root)
+    except OSError as exc:
+        print(
+            f"error: validation I/O failure under {root}: {exc}",
+            file=sys.stderr,
+        )
+        return 2
+
     if args.as_json:
         print(json.dumps(result, indent=2))
     else:

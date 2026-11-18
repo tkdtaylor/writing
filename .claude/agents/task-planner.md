@@ -1,7 +1,7 @@
 ---
 name: task-planner
 description: Break down a feature into well-scoped task files with paired test specs. Picks the next available task ID, writes the test spec first, then the task file. Invoke with "use the task-planner to break down [feature]" or "plan out the [feature] implementation".
-model: inherit
+model: sonnet
 # model-tier: balanced — moderate reasoning for scope analysis and acceptance criteria
 color: blue
 tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]

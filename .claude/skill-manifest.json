@@ -170,32 +170,32 @@
       },
       ".claude/agents/task-executor.md": {
         "template": "assets/templates/tech/.claude/agents/task-executor.md",
-        "installed_hash": "1374776c1782d16332d53f4e07e96e1757a4a2e8f1f8f79e0d90c141a1f5d232",
+        "installed_hash": "635e5696920ee82f220e7010ef836b09cfba172262f1cb2adff91dc6355cb588",
         "template_hash": "1374776c1782d16332d53f4e07e96e1757a4a2e8f1f8f79e0d90c141a1f5d232"
       },
       ".claude/agents/architect.md": {
         "template": "assets/templates/tech/.claude/agents/architect.md",
-        "installed_hash": "7396777abf837d46965c2d79382f84863da0d4cb58c96a9ead071534c72b6edf",
+        "installed_hash": "8d2c16c1ace05e3e97753b50143b00e7245c36cb1c3dd1003eafcd03acbb415b",
         "template_hash": "7396777abf837d46965c2d79382f84863da0d4cb58c96a9ead071534c72b6edf"
       },
       ".claude/agents/code-reviewer.md": {
         "template": "assets/templates/tech/.claude/agents/code-reviewer.md",
-        "installed_hash": "d319bce626fe9b21f6cff46d11fa51f331a1f782e2af29412d74b07d8f92d5a7",
+        "installed_hash": "1dd8cb945a24651f4b043564eac1a47ba3e4f40e668e8ae731989d30cc118a1d",
         "template_hash": "d319bce626fe9b21f6cff46d11fa51f331a1f782e2af29412d74b07d8f92d5a7"
       },
       ".claude/agents/security-auditor.md": {
         "template": "assets/templates/tech/.claude/agents/security-auditor.md",
-        "installed_hash": "ba00b355df2275d44a475e5e5d5cb01c7e777ce314c31b5e36c9f1d9abe88d3c",
+        "installed_hash": "087f44fa70e7b50ef9dc553ca4a3d404f58bca9a1a6f84c42f2404ea5b5146ac",
         "template_hash": "ba00b355df2275d44a475e5e5d5cb01c7e777ce314c31b5e36c9f1d9abe88d3c"
       },
       ".claude/agents/spec-verifier.md": {
         "template": "assets/templates/tech/.claude/agents/spec-verifier.md",
-        "installed_hash": "1993b7208dab712614096f4ff4f63325be3f77145a6eb9d4a788eed565ce6bd2",
+        "installed_hash": "444b8117be45a79f849ec49c105edcc112905d75fc234147c58ca9a5b66ad820",
         "template_hash": "1993b7208dab712614096f4ff4f63325be3f77145a6eb9d4a788eed565ce6bd2"
       },
       ".claude/agents/qa.md": {
         "template": "assets/templates/tech/.claude/agents/qa.md",
-        "installed_hash": "06279d83623af5a03bec945de5ab3da15ceb77d17647b854875c3c7c1747edd9",
+        "installed_hash": "0d70358ea343dcc6a763a6f63b7a8ac208c755584f45e6681330e9fb2d3c2e5b",
         "template_hash": "06279d83623af5a03bec945de5ab3da15ceb77d17647b854875c3c7c1747edd9"
       },
       ".claude/agents/docs-writer.md": {
@@ -205,7 +205,7 @@
       },
       ".claude/agents/task-planner.md": {
         "template": "assets/templates/tech/.claude/agents/task-planner.md",
-        "installed_hash": "504f15e11e6f149ef54dcf53d2776def35fb97377bde874d879435c436b0ca13",
+        "installed_hash": "f27fb191390366a630742fd1ffaf743eba2188be01e698236d53872d7b106c19",
         "template_hash": "504f15e11e6f149ef54dcf53d2776def35fb97377bde874d879435c436b0ca13"
       }
     }

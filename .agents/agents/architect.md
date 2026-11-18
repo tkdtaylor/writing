@@ -9,7 +9,7 @@ description: >-
   for [area]". (Antigravity subagent for .claude/agents/architect.md)
 mainAgent: false
 subagent: true
-model: inherit
+model: pro
 tools:
   - view_file
   - write_to_file

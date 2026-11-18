@@ -1,7 +1,7 @@
 ---
 name: architect
 description: Review proposed features, data model changes, and service boundaries against the architecture docs. Draft ADRs for non-obvious decisions. Audit drift between code, diagrams, and the authoritative spec. Propose executable fitness functions from the spec. Invoke with "use the architect agent to review this design", "draft an ADR for [decision]", "audit drift between the spec and the code", or "propose fitness functions for [area]".
-model: inherit
+model: opus
 # model-tier: deep — complex reasoning about system design, trade-offs, and coupling
 color: purple
 tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]
