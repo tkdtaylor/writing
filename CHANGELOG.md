@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-18
+
 ### Added
 
 - Core skill router in [SKILL.md](SKILL.md) under the 1,500-word context budget. Defines deterministic `mode=` routing (`draft`, `edit`, `review`, `lint`), six universal safeguards, seven-register genre classification, and baseline prose mechanics.
@@ -23,5 +25,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - 3-way edit input triage (`slop/notes`, `real voice`, `point edit`), the `Leave-it-alone` rule, declined-claim `[TK: ...]` unlocks, and sentence-case heading defaults in [SKILL.md](SKILL.md) and [references/edit-and-anti-slop.md](references/edit-and-anti-slop.md). Adds `blader/humanizer` anti-slop rules and the zero-context cold-reader review pass in [references/review-rubric.md](references/review-rubric.md).
 - Blameless SRE incident postmortem and Keep-a-Changelog release-note blueprints in [references/technical-and-docs.md](references/technical-and-docs.md). Adds 3P team updates (`Progress`, `Plans`, `Problems`) and no-context-rebuilding thread reply discipline in [references/business-and-executive.md](references/business-and-executive.md). Adds Voice-of-Customer copy, punch rationing, and claim unlocks in [references/longform-and-persuasion.md](references/longform-and-persuasion.md).
 - Dash-bypass detection for spaced `--` and en-dash (`U+2013`) clause separators plus `chatbot_artifacts` and `meta_and_strawman_tells` detectors in `scripts/prose_lint.py`. Expands `evals/evals.json` to 22 behavioral cases and `evals/trigger-evals.json` to 34 balanced trigger queries.
+- Identifier-safe `mixed_dialects` (`en-US` vs `en-GB`) detection, bold conceptual-enumeration filtering in `--profile technical`, and 12-hour time plus meta/strawman regex hardening in `scripts/prose_lint.py`.
 
-
+[Unreleased]: https://github.com/tkdtaylor/writing/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/tkdtaylor/writing/releases/tag/v0.1.0
