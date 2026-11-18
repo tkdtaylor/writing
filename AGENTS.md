@@ -31,6 +31,7 @@ scripts/                     <- zero-dep Python 3 CLIs + repo workflow scripts
   strip_markdown.py            strips Markdown/code/tables/frontmatter to clean reader-visible prose
   prose_lint.py                stylometric, mechanical, and flourish prose diagnostics (no composite detector score)
   validate_skill.py            enforces word budgets (<=1,500/file, <=10,000 combined), routing, links, and hygiene
+  package_skill.py             verifies, archives (dist/), and cleanly installs the runtime skill payload
   start-task.sh / finish-task.sh / check-task-state.sh / verify-worktree-isolation.sh
   check-mermaid.py / sync-agy-skills.py
 evals/                       <- JUDGE.md blinded rubric + evals.json + trigger-evals.json
@@ -52,20 +53,27 @@ training/                    <- (gitignored) raw user samples awaiting distillat
 | Skill and reference files | Markdown (GitHub-flavored, continuous-line paragraphs) |
 | Diagnostic and validation scripts | Python 3.10+ standard library only (zero third-party runtime dependencies) |
 | Test runner | `python3 -m unittest` via `make test` |
-| Architectural invariants | `make fitness` (`check-task-state.sh`, `check-mermaid.py`, `sync-agy-skills.py --check`, `validate_skill.py`) |
+| Architectural invariants | `make fitness` (`F-001`..`F-007` across task state, Mermaid, Antigravity sync, skill package, prose hygiene, samples, and clean packaging) |
 
 ## Commands
 
 ```bash
 make lint                                     # syntax-check all Python scripts and tests
 make test                                     # run full unittest suite
-make fitness                                  # run executable architectural fitness checks
+make package                                  # build deterministic writing-skill.tar.gz and writing.skill in dist/
+make fitness                                  # run executable architectural fitness checks (F-001..F-007)
 make check                                    # run lint + test + fitness
 
 python3 scripts/prose_lint.py README.md       # run prose diagnostics on a file
+python3 scripts/prose_lint.py --profile technical samples/technical-doc.after.md
+python3 scripts/prose_lint.py --mode one-pager samples/one-pager.after.md
 python3 scripts/validate_skill.py             # validate skill word budgets, links, and prose hygiene
+python3 scripts/package_skill.py --check      # verify clean runtime payload purity in a staged directory
+python3 scripts/package_skill.py --install-to <dir>  # install only the runtime skill payload cleanly
 python3 scripts/sync-agy-skills.py            # regenerate .agents/ adapters after .claude/ changes
 ```
+
+Note that `prose_lint.py --profile` (alias `--mode`) supports `default`, `technical`, `memo`, `one-pager`, `six-pager`, and `narrative`.
 
 ## Conventions and house prose rules
 
@@ -98,7 +106,8 @@ Every prose file in this repository is a live demonstration of the skill's stand
 
 ### Always
 
-- Keep runtime scripts strictly standard-library Python 3 so the skill installs via `git clone` or `cp` with zero `pip install` step.
+- Keep runtime scripts strictly standard-library Python 3 so the skill installs via clean archive extraction or `package_skill.py --install-to` with zero `pip install` step.
+- Keep `.gitattributes` `export-ignore` synchronized so maintainer folders (`.agents/`, `.claude/`, `docs/`, `tests/`, `evals/`, `samples/`) never leak into end-user skill installations.
 - Verify `make check` passes and `git status` is clean before declaring any task finished.
 - Keep `SKILL.md` routing tables, `commands/write-*.md`, `docs/spec/`, and `README.md` synchronized.
 

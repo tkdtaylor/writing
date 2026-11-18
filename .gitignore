@@ -25,3 +25,6 @@ __pycache__/
 # Raw user-supplied writing samples awaiting distillation (never committed)
 training/
 archive/
+
+# Packaged release archives built by scripts/package_skill.py / make package
+dist/

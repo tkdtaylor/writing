@@ -1,4 +1,4 @@
-.PHONY: lint format test fitness fitness-task-state fitness-mermaid fitness-agy-sync fitness-skill-package fitness-prose-hygiene fitness-samples check
+.PHONY: lint format test package fitness fitness-task-state fitness-mermaid fitness-agy-sync fitness-skill-package fitness-prose-hygiene fitness-samples fitness-clean-package check
 
 lint:
 	@python3 -m py_compile scripts/check-mermaid.py scripts/sync-agy-skills.py
@@ -10,6 +10,10 @@ format:
 
 test:
 	@python3 -m unittest discover -s tests -p "test_*.py" -v
+
+package:
+	@python3 scripts/package_skill.py --output-dir dist
+	@echo "Packaged clean skill archives in dist/."
 
 fitness-task-state:
 	@./scripts/check-task-state.sh
@@ -35,7 +39,11 @@ fitness-samples:
 	@python3 -m unittest tests.test_task_005_evals_and_samples
 	@echo "F-006 (calibration sample regression) passed."
 
-fitness: fitness-task-state fitness-mermaid fitness-agy-sync fitness-skill-package fitness-prose-hygiene fitness-samples
+fitness-clean-package:
+	@python3 scripts/package_skill.py --check
+	@echo "F-007 (clean skill packaging) passed."
+
+fitness: fitness-task-state fitness-mermaid fitness-agy-sync fitness-skill-package fitness-prose-hygiene fitness-samples fitness-clean-package
 	@echo "All fitness checks passed."
 
 check: lint test fitness

@@ -15,7 +15,7 @@ Weak model-generated drafts fail before sentence polish. Polish comes last. Stan
 - **Substance before surface.** Every workflow verifies factual claims, causal qualifiers, speaker attributions, and concrete human or system mechanisms before adjusting phrasing. Missing numbers, owners, dates, or sources become explicit `[TK: specific question]` markers rather than invented details.
 - **Reader-load reduction.** Structural rules front-load conclusions, preconditions, and safety warnings, keep one job per section, and cut throat-clearing warm-ups plus repetitive closing recaps so busy or skeptical readers finish with less effort.
 - **Deterministic mode and register separation.** [SKILL.md](SKILL.md) routes the active workflow mode (`draft`, `edit`, `review`, `lint`) separately from the target genre register. Each turn loads only the active mode guide and one genre guide (`<= 1,500` words per file, `<= 10,000` words combined). Procedural clarity stays sharp in runbooks without flattening essays, and longform craft stays alive in essays without weakening technical docs.
-- **Diagnostics without a composite AI score.** The stripper in [scripts/strip_markdown.py](scripts/strip_markdown.py) isolates reader-visible prose from Markdown syntax. Next, [scripts/prose_lint.py](scripts/prose_lint.py) reports cadence variation, `MATTR-50` diversity, 3-gram repeats, anchor ratios, and line-numbered mechanical and flourish tells without emitting a composite AI score. Flourish checks flag `participial_tail_puffery`, `copula_avoidance`, `rhetorical_qa_pivots`, `performative_fragments`, and `nominalizations_per_100w`.
+- **Diagnostics without a composite AI score.** The stripper in [scripts/strip_markdown.py](scripts/strip_markdown.py) isolates reader-visible prose from Markdown syntax. Next, [scripts/prose_lint.py](scripts/prose_lint.py) reports cadence variation, `MATTR-50` diversity, 3-gram repeats, anchor ratios, and line-numbered tells without a composite AI score. Flourish and baseline checks flag `participial_tail_puffery`, `copula_avoidance`, `rhetorical_qa_pivots`, `performative_fragments`, `nominalizations_per_100w`, `shorthand_ambiguities`, `exclamation_marks`, and `false_agency`.
 
 ## Architecture and routing flow
 
@@ -82,62 +82,76 @@ Only an `Argument` owes a contrarian or non-obvious thesis. Guides, references, 
 
 ## Installing across harnesses
 
-`writing` requires zero third-party packages. Any harness that loads `SKILL.md` or Markdown rules works immediately, and `mode=lint` uses only the Python 3.10+ standard library.
+`writing` requires zero third-party packages. Any harness that reads `SKILL.md` works immediately. For diagnostics, `mode=lint` uses only Python 3.10+ standard library modules.
+
+Use the filtered export archive or `scripts/package_skill.py --install-to <skill-dir>`. Both methods install only the self-contained runtime files (`SKILL.md`, `LICENSE`, `commands/write-*.md`, `references/*.md`, and `scripts/{strip_markdown,prose_lint,validate_skill}.py`). Never run `git clone` straight into recursive skill directories (`~/.gemini/config/skills/`, `.agents/skills/`, `~/.codex/skills/`, or `.github/skills/`). This repository keeps contributor workflow roles under `.agents/skills/`, so a raw clone would register maintainer sub-skills inside your harness. Contributors editing `writing` itself still clone into a standard project folder outside those scan paths.
+
+From a local checkout, copy only the runtime files into any target skill directory:
+
+```bash
+python3 scripts/package_skill.py --install-to <skill-dir>
+```
+
+Or stream the filtered GitHub release tarball directly (leveraging `.gitattributes` `export-ignore`):
+
+```bash
+mkdir -p <skill-dir>
+curl -fsSL https://github.com/tkdtaylor/writing/archive/refs/heads/main.tar.gz | tar -xz --strip-components=1 -C <skill-dir>
+```
 
 ### Claude Code
 
-Install the skill user-wide under `~/.claude/skills/writing` and optionally copy the four `/write-*` slash command wrappers:
+Unpack the release tarball under `~/.claude/skills/writing` and optionally copy the four `/write-*` slash command wrappers:
 
 ```bash
-git clone https://github.com/tkdtaylor/writing.git ~/.claude/skills/writing
+mkdir -p ~/.claude/skills/writing
+curl -fsSL https://github.com/tkdtaylor/writing/archive/refs/heads/main.tar.gz | tar -xz --strip-components=1 -C ~/.claude/skills/writing
 
 # Optional: install /write-draft, /write-edit, /write-review, and /write-lint
 mkdir -p ~/.claude/commands
 cp ~/.claude/skills/writing/commands/write-*.md ~/.claude/commands/
 ```
 
-For a single repository, clone or vendor the skill into `.claude/skills/writing/` and copy `commands/write-*.md` into `.claude/commands/`.
+For a single repository, run `python3 scripts/package_skill.py --install-to .claude/skills/writing` from a local checkout and copy `commands/write-*.md` into `.claude/commands/`.
 
 ### Google Antigravity
 
-Clone into your user-level Antigravity skills directory (`~/.gemini/config/skills/writing/`) or into a workspace-scoped `.agents/skills/writing/` folder:
+Extract the filtered skill payload into your user-level Antigravity directory (`~/.gemini/config/skills/writing/`) or into a workspace `.agents/skills/writing/` folder:
 
 ```bash
 # User-wide installation
-mkdir -p ~/.gemini/config/skills
-git clone https://github.com/tkdtaylor/writing.git ~/.gemini/config/skills/writing
+mkdir -p ~/.gemini/config/skills/writing
+curl -fsSL https://github.com/tkdtaylor/writing/archive/refs/heads/main.tar.gz | tar -xz --strip-components=1 -C ~/.gemini/config/skills/writing
 
-# Or workspace-scoped installation inside a project root
-mkdir -p .agents/skills
-git clone https://github.com/tkdtaylor/writing.git .agents/skills/writing
+# Or workspace-scoped installation from a local checkout
+python3 scripts/package_skill.py --install-to .agents/skills/writing
 ```
 
 ### OpenAI Codex
 
-Clone into your user-level Codex skills directory (`~/.codex/skills/writing/`) or into a project's `.agents/skills/writing/` directory:
+Unpack into your user-level Codex skills directory (`~/.codex/skills/writing/`) or stage into a project's `.agents/skills/writing/` directory:
 
 ```bash
 # User-wide installation
-mkdir -p ~/.codex/skills
-git clone https://github.com/tkdtaylor/writing.git ~/.codex/skills/writing
+mkdir -p ~/.codex/skills/writing
+curl -fsSL https://github.com/tkdtaylor/writing/archive/refs/heads/main.tar.gz | tar -xz --strip-components=1 -C ~/.codex/skills/writing
 
-# Or workspace-scoped installation inside a project root
-mkdir -p .agents/skills
-git clone https://github.com/tkdtaylor/writing.git .agents/skills/writing
+# Or workspace-scoped installation from a local checkout
+python3 scripts/package_skill.py --install-to .agents/skills/writing
 ```
 
 ### Cursor, GitHub Copilot, and Windsurf
 
-Vendor the skill folder or point workspace rule files at `SKILL.md` and `references/`:
+Stage the runtime skill directory into your workspace or point editor rule files at `SKILL.md` and `references/`:
 
 ```bash
 # GitHub Copilot skill folder
-mkdir -p .github/skills
-git clone https://github.com/tkdtaylor/writing.git .github/skills/writing
+mkdir -p .github/skills/writing
+curl -fsSL https://github.com/tkdtaylor/writing/archive/refs/heads/main.tar.gz | tar -xz --strip-components=1 -C .github/skills/writing
 
 # Cursor workspace rules (.cursor/rules/)
-mkdir -p .cursor/rules
-git clone https://github.com/tkdtaylor/writing.git .cursor/skills/writing
+mkdir -p .cursor/skills/writing .cursor/rules
+curl -fsSL https://github.com/tkdtaylor/writing/archive/refs/heads/main.tar.gz | tar -xz --strip-components=1 -C .cursor/skills/writing
 cp .cursor/skills/writing/SKILL.md .cursor/rules/writing.mdc
 
 # Windsurf workspace rules (.windsurfrules)
@@ -148,13 +162,19 @@ Single-file rules in Cursor or Windsurf only load the entry router by default. K
 
 ## Diagnostic CLI usage
 
-All three Python scripts run directly from a checkout with zero setup:
+All Python CLIs run directly from a checkout or clean skill install with zero setup:
 
 ```bash
 # Run human-readable prose diagnostics on one or more Markdown files
 python3 scripts/prose_lint.py README.md
 python3 scripts/prose_lint.py samples/technical-doc.before.md samples/technical-doc.after.md
 python3 scripts/prose_lint.py samples/one-pager.before.md samples/one-pager.after.md
+
+# Validate genre-specific rules via --profile (alias --mode):
+# technical, memo, one-pager, six-pager, or narrative
+python3 scripts/prose_lint.py --profile technical samples/technical-doc.after.md
+python3 scripts/prose_lint.py --profile one-pager samples/one-pager.after.md
+python3 scripts/prose_lint.py --mode memo samples/executive-memo.after.md
 
 # Emit structured JSON metrics (cadence CV, MATTR-50, anchor ratios, line-numbered tells)
 python3 scripts/prose_lint.py --json README.md
@@ -169,9 +189,14 @@ python3 scripts/strip_markdown.py README.md | python3 scripts/prose_lint.py --ra
 # Validate skill word budgets, routing completeness, relative links, eval schemas, and prose hygiene
 python3 scripts/validate_skill.py
 python3 scripts/validate_skill.py --json
+
+# Verify clean skill payload purity, build dist/ archives, or install cleanly into a target folder
+python3 scripts/package_skill.py --check
+python3 scripts/package_skill.py --output-dir dist
+python3 scripts/package_skill.py --install-to ~/.claude/skills/writing --clean
 ```
 
-By design, `prose_lint.py` exits `0` on valid inputs so deliberate stylistic choices in narrative or oral pieces never block an author's pipeline. By contrast, `validate_skill.py` exits `1` whenever a package invariant or repository hygiene rule fails.
+By design, `prose_lint.py` exits `0` on valid inputs so deliberate stylistic choices in narrative or oral pieces never block an author's pipeline. By contrast, `validate_skill.py` and the `--check` packager gate exit `1` when a package invariant or repository hygiene rule fails.
 
 ## Calibration samples and adding your own
 
@@ -205,8 +230,9 @@ writing/
 │   └── longform-and-persuasion.md  #   Essays, landing copy, UX microcopy, speeches/slides, narrative
 ├── scripts/                        # Zero-dependency Python 3.10+ CLIs and repository workflow tools
 │   ├── strip_markdown.py           #   Markdown/code/table/frontmatter stripper
-│   ├── prose_lint.py               #   Cadence, lexical diversity, anchor/posture, mechanical & flourish analyzer
+│   ├── prose_lint.py               #   Cadence, lexical diversity, anchor/posture, mechanical & profile linter
 │   ├── validate_skill.py           #   Word budgets (<=1,500/file, <=10,000 total), links, mode & eval validator
+│   ├── package_skill.py            #   Clean payload verifier, archive packager (dist/), and skill installer
 │   ├── check-mermaid.py            #   GitHub Mermaid parser-hazard linter
 │   ├── sync-agy-skills.py          #   Antigravity .agents/ adapter generator and sync checker
 │   └── *-task*.sh / verify-*.sh    #   Branch and worktree task isolation helpers
@@ -227,10 +253,11 @@ writing/
 │   └── tasks/                     #   backlog/, active/, completed/, test-specs/
 ├── .claude/                       # Maintainer subagents, hooks, and backlog runner commands
 ├── .agents/                       # Synchronized Antigravity workspace adapters
+├── .gitattributes                 # Export-ignore filter so release tarballs ship only the clean skill payload
 ├── training/                      # (gitignored) Local inbox (training/inbox/) for raw user samples
 ├── AGENTS.md                      # Canonical harness-neutral contributor briefing (GEMINI.md symlinks here)
 ├── CLAUDE.md                      # Claude Code maintainer layer importing @AGENTS.md
-└── Makefile                       # lint, test, fitness (F-001..F-006), and check targets
+└── Makefile                       # lint, test, package, fitness (F-001..F-007), and check targets
 ```
 
 ## Prior art and inspiration

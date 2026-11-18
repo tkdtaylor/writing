@@ -1,0 +1,35 @@
+# Exclude maintainer scaffolding, tests, specs, calibration data, and
+# repository governance files from `git archive` and GitHub tarball downloads
+# (`archive/refs/heads/*.tar.gz`) so end-user installs receive only the
+# self-contained skill payload.
+
+/.agents export-ignore
+/.agents/** export-ignore
+/.claude export-ignore
+/.claude/** export-ignore
+/docs export-ignore
+/docs/** export-ignore
+/tests export-ignore
+/tests/** export-ignore
+/evals export-ignore
+/evals/** export-ignore
+/samples export-ignore
+/samples/** export-ignore
+/artifacts export-ignore
+/artifacts/** export-ignore
+/dist export-ignore
+/Makefile export-ignore
+/README.md export-ignore
+/AGENTS.md export-ignore
+/CLAUDE.md export-ignore
+/GEMINI.md export-ignore
+/CONTRIBUTING.md export-ignore
+/CODE_OF_CONDUCT.md export-ignore
+/SECURITY.md export-ignore
+/CHANGELOG.md export-ignore
+/.gitignore export-ignore
+/.gitattributes export-ignore
+/scripts/*.sh export-ignore
+/scripts/check-mermaid.py export-ignore
+/scripts/sync-agy-skills.py export-ignore
+/scripts/package_skill.py export-ignore

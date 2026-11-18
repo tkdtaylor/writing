@@ -10,3 +10,5 @@ Executable architectural invariants run via `make fitness`. Every rule below is 
 | `F-004` | Skill word budgets, routing reachability, relative links, mode symmetry, and eval schemas hold | `make fitness-skill-package` (`python3 scripts/validate_skill.py`) | Active |
 | `F-005` | Repository prose files contain zero prose em dashes, emoji bullets, or hard-wrapped paragraphs | `make fitness-prose-hygiene` (`python3 scripts/validate_skill.py`) | Active |
 | `F-006` | Calibration `.after.md` samples eliminate `.before.md` mechanical tells in `prose_lint.py` | `make fitness-samples` (`python3 -m unittest tests.test_task_005_evals_and_samples`) | Active |
+| `F-007` | End-user skill payload excludes `.agents/`, `.claude/`, `docs/`, and `tests/` and passes `validate_skill.py` when staged | `make fitness-clean-package` (`python3 scripts/package_skill.py --check`) | Active |
+

@@ -24,6 +24,7 @@ EXPECTED_FITNESS_TARGETS = {
     "F-004": "fitness-skill-package",
     "F-005": "fitness-prose-hygiene",
     "F-006": "fitness-samples",
+    "F-007": "fitness-clean-package",
 }
 
 
@@ -42,7 +43,7 @@ class TestTask007Integration(unittest.TestCase):
     """End-to-end verification for fitness gates, README.md, CHANGELOG.md, and CLI pipeline."""
 
     def test_tc_007_01_fitness_gates_and_makefile(self) -> None:
-        """TC-007-01: REQ-007-01 F-001..F-006 are Active in fitness-functions.md and wired in Makefile."""
+        """TC-007-01: REQ-007-01 F-001..F-007 are Active in fitness-functions.md and wired in Makefile."""
         spec_path = ROOT / "docs" / "spec" / "fitness-functions.md"
         makefile_path = ROOT / "Makefile"
         self.assertTrue(spec_path.is_file(), f"Missing {spec_path}")
@@ -65,7 +66,7 @@ class TestTask007Integration(unittest.TestCase):
         self.assertEqual(
             set(rows_by_id.keys()),
             set(EXPECTED_FITNESS_TARGETS.keys()),
-            f"Expected F-001..F-006 rows, found {sorted(rows_by_id.keys())}",
+            f"Expected F-001..F-007 rows, found {sorted(rows_by_id.keys())}",
         )
         for fid, target_name in EXPECTED_FITNESS_TARGETS.items():
             _, target_col, status_col = rows_by_id[fid]
@@ -251,6 +252,7 @@ class TestTask007Integration(unittest.TestCase):
             "one-pager",
             "F-001",
             "F-006",
+            "F-007",
         ):
             self.assertIn(v1_item, changelog_text, f"CHANGELOG.md missing Version 1 item: {v1_item}")
 
@@ -337,6 +339,21 @@ class TestTask007Integration(unittest.TestCase):
                 tells["stacked_questions"],
                 [],
                 f"{fname} has stacked_questions: {tells['stacked_questions']}",
+            )
+            self.assertEqual(
+                tells["shorthand_ambiguities"],
+                [],
+                f"{fname} has shorthand_ambiguities: {tells['shorthand_ambiguities']}",
+            )
+            self.assertEqual(
+                tells["exclamation_marks"],
+                [],
+                f"{fname} has exclamation_marks: {tells['exclamation_marks']}",
+            )
+            self.assertEqual(
+                tells["false_agency"],
+                [],
+                f"{fname} has false_agency: {tells['false_agency']}",
             )
             self.assertEqual(
                 rep["substance_and_posture"]["importance_without_mechanism"],
