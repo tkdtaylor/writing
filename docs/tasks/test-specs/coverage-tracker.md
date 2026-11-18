@@ -24,6 +24,9 @@ Status legend: `⏳` pending, `🟡` code merged on task branch, `✅` verified 
 | 018 | Blameless postmortems, Keep-a-Changelog, 3P updates, and reply discipline | `018-postmortems-changelogs-replies-and-3p-guides-test-spec.md` | ✅ | ✅ | `spec-verifier` APPROVE + L5 (`TC-018-01`..`TC-018-03`, `2abc781`) |
 | 019 | `prose_lint.py` dash-bypass, `chatbot_artifacts`, and `meta_and_strawman_tells` | `019-prose-lint-humanizer-and-dash-bypass-detectors-test-spec.md` | ✅ | ✅ | `spec-verifier` APPROVE + L5 (`TC-019-01`..`TC-019-03`, `358d134`) |
 | 020 | v1.3 evals (`22` cases, `34` triggers), `README`/`CHANGELOG`/`roadmap` sync | `020-v13-evals-readme-and-changelog-sync-test-spec.md` | ✅ | ✅ | `spec-verifier` APPROVE + L5 (`TC-020-01`..`TC-020-03`, `e88126f`) |
+| 021 | `prose_lint.py` adversarial edge-case fixes and `mixed_dialects` detector | `021-prose-lint-edge-cases-and-mixed-dialects-test-spec.md` | ✅ | ✅ | `spec-verifier` APPROVE + L5 (`TC-021-01`..`TC-021-03`, `2c466d5`) |
+| 022 | `v0.1.0` release hygiene across `CHANGELOG.md`, `README.md`, `AGENTS.md`, and `roadmap.md` | `022-v010-release-prep-changelog-and-readme-test-spec.md` | ✅ | ✅ | `spec-verifier` APPROVE + L5 (`TC-022-01`..`TC-022-03`, `5e3682e`) |
+
 
 
 
