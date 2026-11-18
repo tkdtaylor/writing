@@ -20,7 +20,10 @@ Build a generic, cross-harness open-source LLM writing skill with deterministic 
 - **Task 014:** Clean skill packaging and end-user install hygiene via `.gitattributes` `export-ignore`, `scripts/package_skill.py`, `make package`, and `F-007`.
 - **Task 015:** Target-directory and symlink safety hardening in `scripts/package_skill.py`, inner `OSError` guards in `scripts/validate_skill.py`, and concrete agent model-tier mappings (`opus`, `sonnet`, `pro`) across `.claude/agents/` and `.agents/agents/`.
 - **Task 016:** Architecture overview, C4 Mermaid diagram, ADR discoverability, `docs/spec/SPEC.md`, `README.md`, `CHANGELOG.md`, `references/draft-and-brief.md`, and `CONTRIBUTING.md` drift closure.
-
+- **Task 017:** 3-way edit input triage, `Leave-it-alone` rule, declined-claim `[TK: ...]` unlocks, humanizer anti-slop catalog entries, and zero-context cold-reader review pass.
+- **Task 018:** Blameless SRE postmortem and Keep-a-Changelog release-note blueprints, 3P team updates, thread reply discipline (`No context-rebuilding`), and Voice-of-Customer copy rules.
+- **Task 019:** Spaced `--` and en-dash (`U+2013`) dash-bypass detection plus `chatbot_artifacts` and `meta_and_strawman_tells` detectors in `scripts/prose_lint.py` and `docs/spec/` sync.
+- **Task 020:** Expanded v1.3 behavioral and trigger evals (`evals/evals.json`, `evals/trigger-evals.json`), prior-art acknowledgments, `ALL_TELL_LIST_KEYS` test sync, and documentation release sync.
 
 
 ## Milestone 2: Corpus Calibration and Iterative Refinement (Planned)

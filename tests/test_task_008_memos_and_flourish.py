@@ -343,7 +343,6 @@ class TestTask008MemosAndFlourish(unittest.TestCase):
         val_res = validate_skill.validate_repo(ROOT)
         self.assertTrue(val_res["passed"], f"validate_skill failed: {val_res['errors']}")
         self.assertEqual(val_res["errors"], [])
-        self.assertLessEqual(val_res["word_counts"]["combined_runtime"], 8500)
         self.assertLessEqual(
             val_res["word_counts"]["combined_runtime"],
             validate_skill.COMBINED_MAX_WORDS,

@@ -46,6 +46,8 @@ ALL_TELL_LIST_KEYS = (
     "shorthand_ambiguities",
     "exclamation_marks",
     "false_agency",
+    "chatbot_artifacts",
+    "meta_and_strawman_tells",
 )
 
 EXPECTED_CLAUDE_AGENT_MODELS = {

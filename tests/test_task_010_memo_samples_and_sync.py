@@ -36,6 +36,11 @@ ALL_TELL_LIST_KEYS = (
     "rhetorical_qa_pivots",
     "performative_fragments",
     "stacked_questions",
+    "shorthand_ambiguities",
+    "exclamation_marks",
+    "false_agency",
+    "chatbot_artifacts",
+    "meta_and_strawman_tells",
 )
 
 LIST_ITEM_RE = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+")
