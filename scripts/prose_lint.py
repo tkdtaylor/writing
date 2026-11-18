@@ -164,8 +164,15 @@ _MECHANISM_MARKER_RE = re.compile(
     re.IGNORECASE,
 )
 
-# Mechanical & lexical tell patterns (using \u2014 escape, never literal em dash)
+# Mechanical & lexical tell patterns (using \u2014 and \u2013 escapes, never literals)
 _EM_DASH_CHAR = "\u2014"
+_SPACED_DOUBLE_HYPHEN_RE = re.compile(
+    r"(?<=[A-Za-z0-9,)\"'\u2019\u201d])\s+--\s+(?=[A-Za-z0-9\"'(\u2018\u201c])"
+)
+_SPACED_EN_DASH_RE = re.compile(r"(?<=\S)\s+\u2013\s+(?=\S)")
+_MULTI_BACKTICK_CODE_RE = re.compile(
+    r"(?<!`)(`+)(?!`)(?:(?!(?<!`)\1(?!`)).)+(?<!`)\1(?!`)"
+)
 
 _AI_TELL_WORDS_RE = re.compile(
     r"\b("
@@ -843,6 +850,38 @@ _FALSE_AGENCY_RE = re.compile(
     r"dictates?\b|drives?\s+alignment\b|forces?\s+us\b|refuses?\s+to\b|knows?\b)",
     re.IGNORECASE,
 )
+_CHATBOT_ARTIFACTS_RE = re.compile(
+    r"(?:"
+    r"\b(?:great|excellent|wonderful)\s+question\b|"
+    r"\bi\s+hope\s+this\s+helps\b|"
+    r"\bhappy\s+to\s+help\b|"
+    r"\blet\s+me\s+know\s+if\s+you(?:'d\s+like|\s+would\s+like|\s+want|\s+need)\b|"
+    r"\bwould\s+you\s+like\s+me\s+to\b|"
+    r"\bfeel\s+free\s+to\s+ask\b|"
+    r"^\s*(?:certainly|of\s+course|sure\s+thing)[,!.]|"
+    r"\bas\s+of\s+my\s+(?:last\s+)?(?:knowledge|training)\s+(?:update|cutoff)\b|"
+    r"\bup\s+to\s+my\s+(?:last\s+)?(?:training|knowledge)\b|"
+    r"\bwhile\s+specific\s+details\s+are\s+(?:limited|scarce)\b|"
+    r"\bnot\s+(?:widely|extensively)\s+documented\s+in\s+(?:readily\s+)?available\s+sources\b"
+    r")",
+    re.IGNORECASE,
+)
+_META_AND_STRAWMAN_TELLS_RE = re.compile(
+    r"(?:"
+    r"\bthis\s+(?:section|document|guide|page)\s+is\s+organized\s+by\b|"
+    r"\bthe\s+table\s+below\s+(?:compares|lists|summarizes|shows)\b|"
+    r"\bthe\s+figures\s+below\s+(?:are|were)\s+(?:compiled|drawn)\s+from\b|"
+    r"\bdespite\s+these\s+challenges,\s+[^.?!]{1,80}\bcontinues\s+to\s+thrive\b|"
+    r"\bthe\s+future\s+looks\s+(?:bright|promising)\b|"
+    r"\bexciting\s+times\s+lie\s+ahead\b|"
+    r"\bdon't\s+get\s+me\s+wrong\b|"
+    r"\bi'm\s+not\s+saying\s+that\b|"
+    r"\b(?:a\s+tempting|an\s+obvious)\s+approach\s+would\s+be\s+to\b|"
+    r"\bone\s+might\s+be\s+tempted\s+to\b|"
+    r"\bno\s+[a-z][a-z -]{1,24},\s+no\s+[a-z][a-z -]{1,24},\s+(?:and\s+)?no\s+[a-z][a-z-]*"
+    r")",
+    re.IGNORECASE,
+)
 
 # Genre profile validation constants and patterns
 VALID_PROFILES = (
@@ -1507,6 +1546,38 @@ def _detect_false_agency(
     return hits
 
 
+def _mask_inline_code_and_syntax(line: str) -> str:
+    """Mask CommonMark single/multi-backtick code spans, images, and link URLs."""
+    s = _MULTI_BACKTICK_CODE_RE.sub(" ", line)
+    return _strip_md.mask_inline_syntax_for_tells(s)
+
+
+def _scan_unquoted_prose_regex(
+    pattern: re.Pattern[str],
+    masked_lines: list[str],
+    raw_lines: list[str],
+) -> list[dict[str, Any]]:
+    """Scan non-code prose lines with inline code and double-quoted literals masked."""
+    hits: list[dict[str, Any]] = []
+    for idx, mline in enumerate(masked_lines):
+        if not mline.strip():
+            continue
+        cleaned = _mask_inline_code_and_syntax(mline)
+        cleaned = _DOUBLE_QUOTED_LITERAL_RE.sub(" ", cleaned)
+        cleaned = _strip_md.clean_inline_markdown(cleaned, keep_code_text=False)
+        cleaned = cleaned.replace("\u2019", "'").replace("\u2018", "'")
+        cleaned = _LEADING_BLOCK_MARKER_RE.sub("", cleaned)
+        for m in pattern.finditer(cleaned):
+            hits.append(
+                {
+                    "line": idx + 1,
+                    "match": re.sub(r"\s+", " ", m.group(0)).strip().lower(),
+                    "excerpt": _make_excerpt(raw_lines[idx]),
+                }
+            )
+    return hits
+
+
 def _split_pre_appendix(text: str) -> tuple[str, bool]:
     """Split text before the first non-fenced Appendix heading (h1-h3)."""
     normalized = text.replace("\r\n", "\n").replace("\r", "\n")
@@ -1886,8 +1957,12 @@ def analyze_text(
     for idx, mline in enumerate(masked_lines):
         if not mline.strip():
             continue
-        no_code = _strip_md.mask_inline_syntax_for_tells(mline)
-        em_cnt = no_code.count(_EM_DASH_CHAR)
+        no_code = _mask_inline_code_and_syntax(mline)
+        em_cnt = (
+            no_code.count(_EM_DASH_CHAR)
+            + len(_SPACED_DOUBLE_HYPHEN_RE.findall(no_code))
+            + len(_SPACED_EN_DASH_RE.findall(no_code))
+        )
         if em_cnt > 0:
             em_dashes.append(
                 {
@@ -1939,6 +2014,12 @@ def analyze_text(
     )
     exclamation_marks = _detect_exclamation_marks(masked_lines, raw_lines)
     false_agency = _detect_false_agency(masked_lines, raw_lines)
+    chatbot_artifacts = _scan_unquoted_prose_regex(
+        _CHATBOT_ARTIFACTS_RE, masked_lines, raw_lines
+    )
+    meta_and_strawman_tells = _scan_unquoted_prose_regex(
+        _META_AND_STRAWMAN_TELLS_RE, masked_lines, raw_lines
+    )
     passive_count = _count_passive_voice(sentences)
     adverb_count = _count_adverbs(all_words)
 
@@ -1999,6 +2080,8 @@ def analyze_text(
             "shorthand_ambiguities": shorthand_ambiguities,
             "exclamation_marks": exclamation_marks,
             "false_agency": false_agency,
+            "chatbot_artifacts": chatbot_artifacts,
+            "meta_and_strawman_tells": meta_and_strawman_tells,
             "passive_voice_per_100w": per_100w(passive_count),
             "adverbs_per_100w": per_100w(adverb_count),
             "nominalizations_per_100w": per_100w(nominalization_count),
@@ -2150,6 +2233,8 @@ def format_human_report(report: dict[str, Any]) -> str:
         ("shorthand_ambiguities", "shorthand_ambiguity"),
         ("exclamation_marks", "exclamation_mark"),
         ("false_agency", "false_agency"),
+        ("chatbot_artifacts", "chatbot_artifacts"),
+        ("meta_and_strawman_tells", "meta_and_strawman_tells"),
     ]
     for key, label in labeled_categories:
         for item in mech[key][:5]:

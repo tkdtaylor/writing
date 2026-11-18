@@ -66,6 +66,8 @@ No composite score field is permitted. Output keys:
     "shorthand_ambiguities": [],
     "exclamation_marks": [],
     "false_agency": [],
+    "chatbot_artifacts": [],
+    "meta_and_strawman_tells": [],
     "passive_voice_per_100w": 1.2,
     "adverbs_per_100w": 1.8,
     "nominalizations_per_100w": 0.0
