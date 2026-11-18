@@ -23,5 +23,7 @@ Status legend: `⏳` pending, `🟡` code merged on task branch, `✅` verified 
 | 017 | 3-way edit triage, `Leave-it-alone` test, claim unlocks, and `Cold-reader` pass | `017-edit-triage-cold-reader-and-humanizer-rules-test-spec.md` | ✅ | ✅ | `spec-verifier` APPROVE + L5 (`TC-017-01`..`TC-017-03`, `13800c3`) |
 | 018 | Blameless postmortems, Keep-a-Changelog, 3P updates, and reply discipline | `018-postmortems-changelogs-replies-and-3p-guides-test-spec.md` | ✅ | ✅ | `spec-verifier` APPROVE + L5 (`TC-018-01`..`TC-018-03`, `2abc781`) |
 | 019 | `prose_lint.py` dash-bypass, `chatbot_artifacts`, and `meta_and_strawman_tells` | `019-prose-lint-humanizer-and-dash-bypass-detectors-test-spec.md` | ✅ | ✅ | `spec-verifier` APPROVE + L5 (`TC-019-01`..`TC-019-03`, `358d134`) |
+| 020 | v1.3 evals (`22` cases, `34` triggers), `README`/`CHANGELOG`/`roadmap` sync | `020-v13-evals-readme-and-changelog-sync-test-spec.md` | ✅ | ✅ | `spec-verifier` APPROVE + L5 (`TC-020-01`..`TC-020-03`, `e88126f`) |
+
 
 
