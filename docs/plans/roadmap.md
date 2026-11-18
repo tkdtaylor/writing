@@ -18,6 +18,9 @@ Build a generic, cross-harness open-source LLM writing skill with deterministic 
 - **Task 012:** Negative `Don't use for...` trigger boundaries in `SKILL.md`, single-dialect consistency with literal identifier preservation, and workspace prose-formatter precedence.
 - **Task 013:** Baseline prose-lint tell detectors (`shorthand_ambiguities`, `exclamation_marks`, `false_agency`), `OSError` CLI guards, and `--profile` / `--mode` genre validation (`technical`, `memo`, `one-pager`, `six-pager`, `narrative`).
 - **Task 014:** Clean skill packaging and end-user install hygiene via `.gitattributes` `export-ignore`, `scripts/package_skill.py`, `make package`, and `F-007`.
+- **Task 015:** Target-directory and symlink safety hardening in `scripts/package_skill.py`, inner `OSError` guards in `scripts/validate_skill.py`, and concrete agent model-tier mappings (`opus`, `sonnet`, `pro`) across `.claude/agents/` and `.agents/agents/`.
+- **Task 016:** Architecture overview, C4 Mermaid diagram, ADR discoverability, `docs/spec/SPEC.md`, `README.md`, `CHANGELOG.md`, `references/draft-and-brief.md`, and `CONTRIBUTING.md` drift closure.
+
 
 
 ## Milestone 2: Corpus Calibration and Iterative Refinement (Planned)
