@@ -875,11 +875,341 @@ _META_AND_STRAWMAN_TELLS_RE = re.compile(
     r"\bthe\s+future\s+looks\s+(?:bright|promising)\b|"
     r"\bexciting\s+times\s+lie\s+ahead\b|"
     r"\bdon't\s+get\s+me\s+wrong\b|"
-    r"\bi'm\s+not\s+saying\s+that\b|"
+    r"\bi(?:'m|\s+am)\s+not\s+saying(?:\s+that)?\b|"
+    r"\bthis\s+(?:isn't|is\s+not)\s+(?:really\s+|mainly\s+|just\s+)?about\b|"
     r"\b(?:a\s+tempting|an\s+obvious)\s+approach\s+would\s+be\s+to\b|"
     r"\bone\s+might\s+be\s+tempted\s+to\b|"
-    r"\bno\s+[a-z][a-z -]{1,24},\s+no\s+[a-z][a-z -]{1,24},\s+(?:and\s+)?no\s+[a-z][a-z-]*"
+    r"\bno\s+[a-z][a-z -]{1,24}(?:[,;]\s*|\.\s+)no\s+[a-z][a-z -]{1,24}(?:[,;]\s*(?:and\s+)?|\.\s+)no\s+[a-z][a-z-]*"
     r")",
+    re.IGNORECASE,
+)
+
+
+def _build_dialect_word_sets() -> tuple[frozenset[str], frozenset[str]]:
+    us_words: set[str] = {
+        # -or
+        "color",
+        "colors",
+        "colored",
+        "coloring",
+        "colorful",
+        "colorless",
+        "discolor",
+        "discolored",
+        "multicolor",
+        "multicolored",
+        "behavior",
+        "behaviors",
+        "behavioral",
+        "favor",
+        "favors",
+        "favored",
+        "favoring",
+        "favorite",
+        "favorites",
+        "favorable",
+        "favorably",
+        "unfavorable",
+        "flavor",
+        "flavors",
+        "flavored",
+        "flavoring",
+        "flavorful",
+        "flavorless",
+        "honor",
+        "honors",
+        "honored",
+        "honoring",
+        "honorable",
+        "honorably",
+        "dishonor",
+        "dishonored",
+        "humor",
+        "humors",
+        "humored",
+        "humoring",
+        "humorless",
+        "labor",
+        "labors",
+        "labored",
+        "laboring",
+        "laborer",
+        "laborers",
+        "neighbor",
+        "neighbors",
+        "neighboring",
+        "neighborhood",
+        "neighborhoods",
+        "neighborly",
+        "rumor",
+        "rumors",
+        "rumored",
+        "vigor",
+        # -er
+        "center",
+        "centers",
+        "centered",
+        "centering",
+        "recenter",
+        "recentered",
+        "fiber",
+        "fibers",
+        "liter",
+        "liters",
+        "milliliter",
+        "milliliters",
+        "kilometer",
+        "kilometers",
+        "centimeter",
+        "centimeters",
+        "millimeter",
+        "millimeters",
+        "caliber",
+        "calibers",
+        "theater",
+        "theaters",
+        # -yze
+        "analyze",
+        "analyzes",
+        "analyzed",
+        "analyzing",
+        "analyzer",
+        "analyzers",
+        "catalyze",
+        "catalyzes",
+        "catalyzed",
+        "catalyzing",
+        "paralyze",
+        "paralyzes",
+        "paralyzed",
+        "paralyzing",
+        # -ize derivatives
+        "organizational",
+        "optimizer",
+        "optimizers",
+        "unoptimized",
+        "customizable",
+        "recognizable",
+        "unrecognized",
+        "unauthorized",
+        "uninitialized",
+        # lexical pairs
+        "gray",
+        "grays",
+        "skeptic",
+        "skeptics",
+        "skeptical",
+        "skepticism",
+        "artifact",
+        "artifacts",
+        "defense",
+        "defenses",
+        "catalog",
+        "catalogs",
+        "cataloged",
+        "cataloging",
+        "traveled",
+        "traveling",
+        "traveler",
+        "travelers",
+        "canceled",
+        "canceling",
+        "labeled",
+        "labeling",
+        "unlabeled",
+        "modeling",
+        "modeled",
+        "modeler",
+        "fulfill",
+        "fulfills",
+        "fulfillment",
+        "enroll",
+        "enrolls",
+        "enrollment",
+        "enrollments",
+    }
+    uk_words: set[str] = {
+        # -our
+        "colour",
+        "colours",
+        "coloured",
+        "colouring",
+        "colourful",
+        "colourless",
+        "discolour",
+        "discoloured",
+        "multicolour",
+        "multicoloured",
+        "behaviour",
+        "behaviours",
+        "behavioural",
+        "favour",
+        "favours",
+        "favoured",
+        "favouring",
+        "favourite",
+        "favourites",
+        "favourable",
+        "favourably",
+        "unfavourable",
+        "flavour",
+        "flavours",
+        "flavoured",
+        "flavouring",
+        "flavourful",
+        "flavourless",
+        "honour",
+        "honours",
+        "honoured",
+        "honouring",
+        "honourable",
+        "honourably",
+        "dishonour",
+        "dishonoured",
+        "humour",
+        "humours",
+        "humoured",
+        "humouring",
+        "humourless",
+        "labour",
+        "labours",
+        "laboured",
+        "labouring",
+        "labourer",
+        "labourers",
+        "neighbour",
+        "neighbours",
+        "neighbouring",
+        "neighbourhood",
+        "neighbourhoods",
+        "neighbourly",
+        "rumour",
+        "rumours",
+        "rumoured",
+        "vigour",
+        # -re
+        "centre",
+        "centres",
+        "centred",
+        "centring",
+        "recentre",
+        "recentred",
+        "fibre",
+        "fibres",
+        "litre",
+        "litres",
+        "millilitre",
+        "millilitres",
+        "kilometre",
+        "kilometres",
+        "centimetre",
+        "centimetres",
+        "millimetre",
+        "millimetres",
+        "calibre",
+        "calibres",
+        "theatre",
+        "theatres",
+        # -yse (excluding cross-dialect plural nouns like analyses)
+        "analyse",
+        "analysed",
+        "analysing",
+        "analyser",
+        "analysers",
+        "catalyse",
+        "catalysed",
+        "catalysing",
+        "paralyse",
+        "paralysed",
+        "paralysing",
+        # -ise derivatives
+        "organisational",
+        "optimiser",
+        "optimisers",
+        "unoptimised",
+        "customisable",
+        "recognisable",
+        "unrecognised",
+        "unauthorised",
+        "uninitialised",
+        # lexical pairs
+        "grey",
+        "greys",
+        "sceptic",
+        "sceptics",
+        "sceptical",
+        "scepticism",
+        "artefact",
+        "artefacts",
+        "defence",
+        "defences",
+        "catalogue",
+        "catalogues",
+        "catalogued",
+        "cataloguing",
+        "travelled",
+        "travelling",
+        "traveller",
+        "travellers",
+        "cancelled",
+        "cancelling",
+        "labelled",
+        "labelling",
+        "unlabelled",
+        "modelling",
+        "modelled",
+        "modeller",
+        "fulfil",
+        "fulfils",
+        "fulfilment",
+        "enrol",
+        "enrols",
+        "enrolment",
+        "enrolments",
+    }
+    ize_stems = (
+        ("organiz", "organis", True),
+        ("reorganiz", "reorganis", True),
+        ("optimiz", "optimis", True),
+        ("prioritiz", "prioritis", True),
+        ("reprioritiz", "reprioritis", True),
+        ("standardiz", "standardis", True),
+        ("normaliz", "normalis", True),
+        ("minimiz", "minimis", True),
+        ("maximiz", "maximis", True),
+        ("summariz", "summaris", True),
+        ("customiz", "customis", True),
+        ("recogniz", "recognis", False),
+        ("authoriz", "authoris", True),
+        ("initializ", "initialis", True),
+        ("utiliz", "utilis", True),
+        ("localiz", "localis", True),
+        ("serializ", "serialis", True),
+        ("deserializ", "deserialis", True),
+        ("synchroniz", "synchronis", True),
+        ("visualiz", "visualis", True),
+    )
+    for us_stem, uk_stem, has_ation in ize_stems:
+        us_words.update(
+            (f"{us_stem}e", f"{us_stem}es", f"{us_stem}ed", f"{us_stem}ing")
+        )
+        uk_words.update(
+            (f"{uk_stem}e", f"{uk_stem}es", f"{uk_stem}ed", f"{uk_stem}ing")
+        )
+        if has_ation:
+            us_words.update((f"{us_stem}ation", f"{us_stem}ations"))
+            uk_words.update((f"{uk_stem}ation", f"{uk_stem}ations"))
+    return frozenset(us_words), frozenset(uk_words)
+
+
+_US_DIALECT_WORDS, _UK_DIALECT_WORDS = _build_dialect_word_sets()
+_DIALECT_WORD_RE = re.compile(
+    r"(?<![A-Za-z0-9_.-])\b(?:"
+    + "|".join(
+        re.escape(w)
+        for w in sorted(_US_DIALECT_WORDS | _UK_DIALECT_WORDS, key=len, reverse=True)
+    )
+    + r")\b(?![A-Za-z0-9_-]|\.[A-Za-z0-9_])",
     re.IGNORECASE,
 )
 
@@ -893,6 +1223,9 @@ VALID_PROFILES = (
     "narrative",
 )
 _NUMBERED_STEP_RE = re.compile(r"^\s*\d+\.\s+")
+_BOLD_CONCEPT_ENUM_RE = re.compile(
+    r"^\s*\d+[.)]\s+\*\*[^*\n]+?(?:[.:?!]\*\*|\*\*\s*(?:[.:?!)-]|$))"
+)
 _LIST_ITEM_PREFIX_RE = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+")
 _APPENDIX_HEADING_RE = re.compile(
     r"^\s{0,3}#{1,3}\s+Appendi(?:x|ces)\b",
@@ -900,7 +1233,7 @@ _APPENDIX_HEADING_RE = re.compile(
 )
 _SLASH_DATE_RE = re.compile(r"(?<!/)\b\d{1,2}/\d{1,2}/(?:\d{2}|\d{4})\b(?!/)")
 _TWELVE_HOUR_TIME_RE = re.compile(
-    r"(?<![\d.])\b\d{1,2}(?::\d{2})?\s*(?:a\.?m\.?|p\.?m\.?)(?![A-Za-z0-9_])",
+    r"(?<![\d.])\b\d{1,2}(?::\d{2})?\s*(?:[ap]\.m\.(?![A-Za-z0-9_])|[ap]m\b)",
     re.IGNORECASE,
 )
 _BARE_URL_RE = re.compile(r"https?://\S+")
@@ -1636,6 +1969,50 @@ def _compute_body_density(
     return total_words, round(paragraph_words / total_words, 3)
 
 
+def _detect_mixed_dialects(
+    masked_lines: list[str], raw_lines: list[str]
+) -> list[dict[str, Any]]:
+    """Flag documents that mix unambiguous en-US and en-GB prose spellings."""
+    us_hits: list[tuple[int, str, str]] = []
+    uk_hits: list[tuple[int, str, str]] = []
+    for idx, mline in enumerate(masked_lines):
+        if not mline.strip():
+            continue
+        cleaned = _mask_inline_code_and_syntax(mline)
+        cleaned = _BARE_URL_RE.sub(" ", cleaned)
+        cleaned = _DOUBLE_QUOTED_LITERAL_RE.sub(" ", cleaned)
+        cleaned = _strip_md.clean_inline_markdown(cleaned, keep_code_text=False)
+        for m in _DIALECT_WORD_RE.finditer(cleaned):
+            word = m.group(0).lower()
+            raw_src = raw_lines[idx] if idx < len(raw_lines) else mline
+            if word in _US_DIALECT_WORDS:
+                us_hits.append((idx + 1, word, raw_src))
+            elif word in _UK_DIALECT_WORDS:
+                uk_hits.append((idx + 1, word, raw_src))
+
+    if not us_hits or not uk_hits:
+        return []
+
+    dominant_dialect = "en-US" if len(us_hits) >= len(uk_hits) else "en-GB"
+    minority_dialect = "en-GB" if dominant_dialect == "en-US" else "en-US"
+    minority_hits = uk_hits if dominant_dialect == "en-US" else us_hits
+    us_samples = list(dict.fromkeys(w for _, w, _ in us_hits))[:5]
+    uk_samples = list(dict.fromkeys(w for _, w, _ in uk_hits))[:5]
+
+    return [
+        {
+            "line": line_no,
+            "match": word,
+            "dialect": minority_dialect,
+            "dominant_dialect": dominant_dialect,
+            "us_samples": list(us_samples),
+            "uk_samples": list(uk_samples),
+            "excerpt": _make_excerpt(raw_src),
+        }
+        for line_no, word, raw_src in minority_hits
+    ]
+
+
 def _detect_overlong_steps(
     paragraphs_with_lines: list[tuple[int, str]],
     masked_lines: list[str],
@@ -1651,6 +2028,10 @@ def _detect_overlong_steps(
         elif 0 <= line_idx < len(raw_lines):
             check_line = raw_lines[line_idx]
         if not _NUMBERED_STEP_RE.match(check_line):
+            continue
+        if _BOLD_CONCEPT_ENUM_RE.match(check_line) or _BOLD_CONCEPT_ENUM_RE.match(
+            _mask_inline_code_and_syntax(check_line)
+        ):
             continue
         wc = len(_WORD_RE.findall(para_text))
         if wc > 20:
@@ -1677,7 +2058,7 @@ def _detect_date_time_issues(
     for idx, mline in enumerate(masked_lines):
         if not mline.strip():
             continue
-        cleaned = _strip_md.mask_inline_syntax_for_tells(mline)
+        cleaned = _mask_inline_code_and_syntax(mline)
         cleaned = _BARE_URL_RE.sub(" ", cleaned)
         cleaned = _DOUBLE_QUOTED_LITERAL_RE.sub(" ", cleaned)
         line_matches: list[tuple[int, str, str]] = []
@@ -2020,6 +2401,7 @@ def analyze_text(
     meta_and_strawman_tells = _scan_unquoted_prose_regex(
         _META_AND_STRAWMAN_TELLS_RE, masked_lines, raw_lines
     )
+    mixed_dialects = _detect_mixed_dialects(masked_lines, raw_lines)
     passive_count = _count_passive_voice(sentences)
     adverb_count = _count_adverbs(all_words)
 
@@ -2082,6 +2464,7 @@ def analyze_text(
             "false_agency": false_agency,
             "chatbot_artifacts": chatbot_artifacts,
             "meta_and_strawman_tells": meta_and_strawman_tells,
+            "mixed_dialects": mixed_dialects,
             "passive_voice_per_100w": per_100w(passive_count),
             "adverbs_per_100w": per_100w(adverb_count),
             "nominalizations_per_100w": per_100w(nominalization_count),
@@ -2235,6 +2618,7 @@ def format_human_report(report: dict[str, Any]) -> str:
         ("false_agency", "false_agency"),
         ("chatbot_artifacts", "chatbot_artifacts"),
         ("meta_and_strawman_tells", "meta_and_strawman_tells"),
+        ("mixed_dialects", "mixed_dialects"),
     ]
     for key, label in labeled_categories:
         for item in mech[key][:5]:
