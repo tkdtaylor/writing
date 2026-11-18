@@ -16,6 +16,8 @@ Tabular C4 component catalog paired with [docs/architecture/diagrams.md](../arch
 | Markdown Stripper | `scripts/strip_markdown.py` | Python 3 CLI/module | Strips Markdown/code/tables/frontmatter into clean reader-visible prose blocks and heading lists |
 | Prose Linter | `scripts/prose_lint.py` | Python 3 CLI/module | Computes cadence, lexical diversity, anchor/posture ratios, and mechanical, lexical, and flourish tell locations |
 | Skill Package Validator | `scripts/validate_skill.py` | Python 3 CLI/module | Enforces word budgets (`<= 1,500` per file, `<= 10,000` combined), routing completeness, relative links, eval schemas, and repo prose hygiene |
+| Skill Packager and Installer | `scripts/package_skill.py` | Python 3 CLI/module | Stages and validates the clean runtime skill payload, builds deterministic `writing-skill.tar.gz` and `writing.skill` archives, and installs cleanly into target skill folders |
+| Git Export Filter | `.gitattributes` | Git configuration | Marks maintainer scaffolding, specs, tests, evals, samples, and repo docs `export-ignore` so `git archive` emits only the self-contained skill payload |
 | Evaluation Suite | `evals/evals.json`, `evals/trigger-evals.json`, `evals/JUDGE.md` | JSON + Markdown | Behavioral test cases, trigger optimization queries, and blinded 4-gate + 6-dimension judge rubric |
 | Calibration Samples | `samples/*` | Markdown fixtures | Paired `.before.md` and `.after.md` documents verifying defect reduction and factual preservation |
 | Antigravity Adapters | `.agents/` + `scripts/sync-agy-skills.py` | Markdown + Python 3 | Workspace hooks, skills, and custom subagent adapters derived from `.claude/` |

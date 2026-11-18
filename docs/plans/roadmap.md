@@ -14,6 +14,11 @@ Build a generic, cross-harness open-source LLM writing skill with deterministic 
 - **Task 008:** Narrative memo reference (`references/one-pager-and-six-pager.md`) for One-Pagers, Six-Pagers, and Working Backwards `PR/FAQs`, plus comma-splice overcorrection and anti-flourish guidance.
 - **Task 009:** Expanded flourish detectors in `scripts/prose_lint.py` (`participial_tail_puffery`, `copula_avoidance`, `rhetorical_qa_pivots`, `performative_fragments`, `nominalizations_per_100w`) and the `10,000`-word combined runtime budget in `scripts/validate_skill.py`.
 - **Task 010:** Narrative `samples/one-pager.{before,after}.md` calibration pair, expanded memo and anti-flourish eval suites (`evals/evals.json`, `evals/trigger-evals.json`), and repository documentation sync.
+- **Task 011:** Hardened `OSError` exit code `2` handling in `scripts/validate_skill.py` and `scripts/strip_markdown.py` with `TemporaryDirectory` test isolation.
+- **Task 012:** Negative `Don't use for...` trigger boundaries in `SKILL.md`, single-dialect consistency with literal identifier preservation, and workspace prose-formatter precedence.
+- **Task 013:** Baseline prose-lint tell detectors (`shorthand_ambiguities`, `exclamation_marks`, `false_agency`), `OSError` CLI guards, and `--profile` / `--mode` genre validation (`technical`, `memo`, `one-pager`, `six-pager`, `narrative`).
+- **Task 014:** Clean skill packaging and end-user install hygiene via `.gitattributes` `export-ignore`, `scripts/package_skill.py`, `make package`, and `F-007`.
+
 
 ## Milestone 2: Corpus Calibration and Iterative Refinement (Planned)
 
