@@ -68,12 +68,15 @@ No composite score field is permitted. Output keys:
     "false_agency": [],
     "chatbot_artifacts": [],
     "meta_and_strawman_tells": [],
+    "mixed_dialects": [],
     "passive_voice_per_100w": 1.2,
     "adverbs_per_100w": 1.8,
     "nominalizations_per_100w": 0.0
   }
 }
 ```
+
+Each `mixed_dialects` item emits `{"line", "match", "dialect", "dominant_dialect", "us_samples", "uk_samples", "excerpt"}` for minority-side words when both `en-US` and `en-GB` prose spellings appear.
 
 When `--profile` / `--mode` is set to a non-default genre (`technical`, `memo`, `one-pager`, `six-pager`, or `narrative`), the JSON report includes an additional `profile_checks` object (still with zero composite score fields):
 
@@ -97,7 +100,7 @@ When `--profile` / `--mode` is set to a non-default genre (`technical`, `memo`, 
 
 Genre-specific fields inside `profile_checks`:
 
-- `technical`: `overlong_steps` (`[{"line", "words", "excerpt"}]`) and `date_time_issues` (`[{"line", "match", "recommendation", "excerpt"}]`).
+- `technical`: `overlong_steps` (`[{"line", "words", "excerpt"}]`, excluding bold-titled conceptual enumerations) and `date_time_issues` (`[{"line", "match", "recommendation", "excerpt"}]`).
 - `one-pager` / `six-pager` / `memo`: `body_word_count`, `appendix_stripped`, `word_budget_range` (`[350, 550]`, for `one-pager`) or `word_budget_max` (`2500`, for `six-pager`). Also emits `word_budget_ok`, `prose_paragraph_share`, `min_prose_share` (`0.8`), `prose_density_ok`, and `date_time_issues`.
 - `narrative`: `prose_paragraph_share`, `min_prose_share` (`0.85`), `prose_density_ok`, `body_sentence_count`, `body_sentence_cv`, `min_body_sentence_cv` (`0.3`), and `cadence_ok`.
 

@@ -102,6 +102,7 @@ ALL_TELL_LIST_KEYS = (
     "false_agency",
     "chatbot_artifacts",
     "meta_and_strawman_tells",
+    "mixed_dialects",
 )
 
 

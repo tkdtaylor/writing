@@ -319,6 +319,7 @@ class TestTask004ProseLintAndStripper(unittest.TestCase):
             "false_agency",
             "chatbot_artifacts",
             "meta_and_strawman_tells",
+            "mixed_dialects",
             "passive_voice_per_100w",
             "adverbs_per_100w",
             "nominalizations_per_100w",
@@ -379,6 +380,7 @@ class TestTask004ProseLintAndStripper(unittest.TestCase):
         self.assertEqual(clean_mech["false_agency"], [])
         self.assertEqual(clean_mech["chatbot_artifacts"], [])
         self.assertEqual(clean_mech["meta_and_strawman_tells"], [])
+        self.assertEqual(clean_mech["mixed_dialects"], [])
         self.assertEqual(clean_mech["adverbs_per_100w"], 0.0)
         self.assertEqual(clean_mech["nominalizations_per_100w"], 0.0)
 
