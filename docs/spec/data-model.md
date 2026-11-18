@@ -63,12 +63,41 @@ No composite score field is permitted. Output keys:
     "rhetorical_qa_pivots": [],
     "performative_fragments": [],
     "stacked_questions": [],
+    "shorthand_ambiguities": [],
+    "exclamation_marks": [],
+    "false_agency": [],
     "passive_voice_per_100w": 1.2,
     "adverbs_per_100w": 1.8,
     "nominalizations_per_100w": 0.0
   }
 }
 ```
+
+When `--profile` / `--mode` is set to a non-default genre (`technical`, `memo`, `one-pager`, `six-pager`, or `narrative`), the JSON report includes an additional `profile_checks` object (still with zero composite score fields):
+
+```json
+{
+  "profile_checks": {
+    "profile": "one-pager",
+    "requested_profile": "memo",
+    "passed": true,
+    "body_word_count": 456,
+    "appendix_stripped": false,
+    "word_budget_range": [350, 550],
+    "word_budget_ok": true,
+    "prose_paragraph_share": 0.879,
+    "min_prose_share": 0.8,
+    "prose_density_ok": true,
+    "date_time_issues": []
+  }
+}
+```
+
+Genre-specific fields inside `profile_checks`:
+
+- `technical`: `overlong_steps` (`[{"line", "words", "excerpt"}]`) and `date_time_issues` (`[{"line", "match", "recommendation", "excerpt"}]`).
+- `one-pager` / `six-pager` / `memo`: `body_word_count`, `appendix_stripped`, `word_budget_range` (`[350, 550]`, for `one-pager`) or `word_budget_max` (`2500`, for `six-pager`). Also emits `word_budget_ok`, `prose_paragraph_share`, `min_prose_share` (`0.8`), `prose_density_ok`, and `date_time_issues`.
+- `narrative`: `prose_paragraph_share`, `min_prose_share` (`0.85`), `prose_density_ok`, `body_sentence_count`, `body_sentence_cv`, `min_body_sentence_cv` (`0.3`), and `cadence_ok`.
 
 ## 3. `evals/evals.json` schema (`skill-creator` compatible)
 
