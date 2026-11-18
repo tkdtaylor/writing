@@ -31,7 +31,7 @@ Do not modify files owned by Task 015 (`scripts/package_skill.py`, `scripts/vali
      - Mention the `10,000`-word combined runtime budget in Principle 3.
      - Replace `via git clone or cp` in Principle 5 with filtered release/archive tarballs or `scripts/package_skill.py --install-to` so maintainer `.agents/` folders never leak into end-user skill scan paths.
      - Include `package_skill.py` in the CLI bullet (and mention `F-001`..`F-007`).
-     - Add an `## Architecture decisions` section at the bottom with relative Markdown links to [ADR 001: Register and Genre Routing](decisions/001-register-and-genre-routing.md) and [ADR 002: Narrative Memos and Anti-Flourish Rules](decisions/002-narrative-memos-and-anti-flourish-rules.md).
+     - Add an `## Architecture decisions` section at the bottom with relative Markdown links to `[ADR 001: Register and Genre Routing](decisions/001-register-and-genre-routing.md)` and `[ADR 002: Narrative Memos and Anti-Flourish Rules](decisions/002-narrative-memos-and-anti-flourish-rules.md)`.
    - In `docs/architecture/diagrams.md`:
      - Update `Last updated: 2026-11-18`.
      - Update C4 Level 1 `CLI` label to `CLI["Diagnostic & Packaging CLIs (strip_markdown, prose_lint, validate_skill, package_skill)"]` (quote node labels containing parentheses so `check-mermaid.py` passes cleanly).

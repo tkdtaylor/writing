@@ -74,7 +74,7 @@ Step 2 classifies each piece into one primary register and loads the matching ge
 | Genre Guide | Registers | Media and Structural Coverage |
 |-------------|-----------|-------------------------------|
 | [references/technical-and-docs.md](references/technical-and-docs.md) | `Guide`, `Reference`, `Explanation`, `Argument` (RFC/ADR) | Diataxis mode purity (`Tutorial`, `How-to`, `Reference`, `Explanation`), developer style (`<= 20`-word procedural steps, warnings above guarded commands), ASD-STE100 simplified procedural rules, Global English, READMEs, RFCs and ADRs, and pull-request briefings |
-| [references/business-and-executive.md](references/business-and-executive.md) | `Decision/Update` | BLUF memos, self-contained decision briefs, explicit epistemic tags (`Verified`, `Estimated`, `Assumed`, `Unknown`), metric vetting (numerator, denominator, time window, baseline), status updates, and action-oriented emails |
+| [references/business-and-executive.md](references/business-and-executive.md) | `Decision/Update` | BLUF memos, self-contained decision briefs, explicit epistemic tags (`measured`, `inferred`, `open`), four-part metric vetting (`unit`, `sample or runs`, `baseline`, `limiter`), status updates, and action-oriented emails |
 | [references/one-pager-and-six-pager.md](references/one-pager-and-six-pager.md) | `Decision/Update`, `Argument` | Reversible vs irreversible door-type selection, 5-section One-Pagers (`350` to `550` words), 7-part Six-Pagers with sacrifice-bearing tenets and input vs output metrics, Working Backwards `PR/FAQs`, `80%+` causal prose density, and the two-way Appendix contract |
 | [references/longform-and-persuasion.md](references/longform-and-persuasion.md) | `Argument`, `Persuasion/Copy`, `Narrative/Oral` | Point-of-view essays with fair steelman objections, landing and launch copy anchored in checkable mechanisms, UX microcopy (errors, empty states, confirmations), speeches and slide decks, progressive visual diagrams, and creative narrative |
 
@@ -92,7 +92,7 @@ From a local checkout, copy only the runtime files into any target skill directo
 python3 scripts/package_skill.py --install-to <skill-dir>
 ```
 
-Or stream the filtered GitHub release tarball directly (leveraging `.gitattributes` `export-ignore`):
+Or stream the filtered GitHub `main` archive tarball directly (filtered by `.gitattributes` `export-ignore`):
 
 ```bash
 mkdir -p <skill-dir>
@@ -101,7 +101,7 @@ curl -fsSL https://github.com/tkdtaylor/writing/archive/refs/heads/main.tar.gz |
 
 ### Claude Code
 
-Unpack the release tarball under `~/.claude/skills/writing` and optionally copy the four `/write-*` slash command wrappers:
+Unpack the filtered `main` archive tarball under `~/.claude/skills/writing` and optionally copy the four `/write-*` slash command wrappers:
 
 ```bash
 mkdir -p ~/.claude/skills/writing
@@ -247,7 +247,7 @@ writing/
 │   └── one-pager.{before,after}.md
 ├── tests/                         # Python unittest suite verifying scripts, skill files, and task specs
 ├── docs/                          # Authoritative specifications, architecture, roadmap, and task specs
-│   ├── spec/                      #   SPEC.md, behaviors, architecture, data-model, interfaces, fitness
+│   ├── spec/                      #   SPEC.md, behaviors, architecture, data-model, interfaces, configuration, fitness
 │   ├── architecture/              #   overview.md, C4 diagrams.md, tech-stack.md, decisions/
 │   ├── plans/                     #   roadmap.md, sprints/
 │   └── tasks/                     #   backlog/, active/, completed/, test-specs/

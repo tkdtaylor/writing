@@ -1,6 +1,6 @@
 # System Diagrams
 
-Last updated: 2026-11-17
+Last updated: 2026-11-18
 
 ## C4 Level 1: System Context
 
@@ -8,7 +8,7 @@ Last updated: 2026-11-17
 flowchart LR
     Author["Author or Developer"] --> Harness["Agent Harness (Claude Code, Antigravity, Codex, Cursor)"]
     Harness --> Skill["writing Skill (SKILL.md + references/ + commands/)"]
-    Harness --> CLI["Prose Diagnostic Scripts (strip_markdown.py, prose_lint.py)"]
+    Harness --> CLI["Diagnostic & Packaging CLIs (strip_markdown, prose_lint, validate_skill, package_skill)"]
     Skill --> Output["Draft, Edited Prose, Critique Report, or Lint Summary"]
     CLI --> Skill
 ```
@@ -28,6 +28,7 @@ flowchart TD
     ModeReview --> GenreRouter
     GenreRouter --> Tech["references/technical-and-docs.md"]
     GenreRouter --> Biz["references/business-and-executive.md"]
+    GenreRouter --> Memo["references/one-pager-and-six-pager.md"]
     GenreRouter --> Long["references/longform-and-persuasion.md"]
 ```
 
