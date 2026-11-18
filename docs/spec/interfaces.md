@@ -27,14 +27,15 @@ python3 scripts/strip_markdown.py [FILE] [--json]
 ### `scripts/prose_lint.py`
 
 ```bash
-python3 scripts/prose_lint.py [FILE ...] [--json] [--raw]
+python3 scripts/prose_lint.py [FILE ...] [--json] [--raw] [--profile PROFILE]
 ```
 
 - Reads one or more `FILE` paths (or `stdin` when omitted or `-`).
-- Strips Markdown syntax automatically via `strip_markdown` unless `--raw` is passed, while still inspecting raw Markdown lines for mechanical checks (em dashes, emoji bullets, bold-label restatements, hard-wrapped lines).
+- Strips Markdown syntax automatically via `strip_markdown` unless `--raw` is passed. Raw lines remain checked for mechanical tells (em dashes, emoji bullets, bold-label restatements, hard wraps, shorthand ambiguities, prose exclamation marks, and false agency).
+- `--profile` (alias `--mode`): optional genre profile (`default`, `technical`, `memo`, `one-pager`, `six-pager`, `narrative`) attaching `profile_checks` diagnostics to both human-readable and `--json` reports when non-default.
 - Default stdout: concise human-readable diagnostic report per input.
 - `--json`: emits a single JSON report object (for one input) or a list of report objects (for multiple inputs).
-- Exit codes: `0` on successful analysis (advisory by default so writers are not blocked by earned style choices), `2` on file/usage error.
+- Exit codes: `0` on successful analysis (advisory by default so writers are not blocked by earned style choices), `2` on file/permission (`OSError`) or usage error.
 
 ### `scripts/validate_skill.py`
 

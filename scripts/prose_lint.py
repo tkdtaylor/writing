@@ -820,6 +820,52 @@ _NON_ADVERB_LY = frozenset(
     }
 )
 
+# Shorthand ambiguities, exclamation marks, and false agency patterns
+_SHORTHAND_AMBIGUITY_RE = re.compile(
+    r"(?:\band/or\b|\b[A-Za-z]{2,}\(s\)(?![A-Za-z0-9_]))",
+    re.IGNORECASE,
+)
+_HTML_COMMENT_FRAG_RE = re.compile(r"<!--.*?-->|<!--")
+_MD_IMAGE_ALT_RE = re.compile(r"!\[[^\]]*\]")
+_GITHUB_ALERT_RE = re.compile(
+    r"\[\!(?:NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]",
+    re.IGNORECASE,
+)
+_NOT_EQUAL_RE = re.compile(r"!={1,2}")
+_DOUBLE_QUOTED_LITERAL_RE = re.compile(
+    r'"(?:\\.|[^"\\\n])*"|\u201c[^\u201d\n]*\u201d'
+)
+_FALSE_AGENCY_RE = re.compile(
+    r"\b(?:the\s+|these\s+|our\s+|raw\s+)?"
+    r"(?:metrics?|data|numbers?|telemetry|benchmarks?|architecture|design|schema|"
+    r"codebase|history|market|landscape|reality)\s+"
+    r"(?:speaks?\b|tells?\s+(?:us|a\s+story)\b|demands?\b|wants?\b|insists?\b|"
+    r"dictates?\b|drives?\s+alignment\b|forces?\s+us\b|refuses?\s+to\b|knows?\b)",
+    re.IGNORECASE,
+)
+
+# Genre profile validation constants and patterns
+VALID_PROFILES = (
+    "default",
+    "technical",
+    "memo",
+    "one-pager",
+    "six-pager",
+    "narrative",
+)
+_NUMBERED_STEP_RE = re.compile(r"^\s*\d+\.\s+")
+_LIST_ITEM_PREFIX_RE = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+")
+_APPENDIX_HEADING_RE = re.compile(
+    r"^\s{0,3}#{1,3}\s+Appendi(?:x|ces)\b",
+    re.IGNORECASE,
+)
+_SLASH_DATE_RE = re.compile(r"(?<!/)\b\d{1,2}/\d{1,2}/(?:\d{2}|\d{4})\b(?!/)")
+_TWELVE_HOUR_TIME_RE = re.compile(
+    r"(?<![\d.])\b\d{1,2}(?::\d{2})?\s*(?:a\.?m\.?|p\.?m\.?)(?![A-Za-z0-9_])",
+    re.IGNORECASE,
+)
+_BARE_URL_RE = re.compile(r"https?://\S+")
+
 
 @dataclass(frozen=True)
 class SentenceSpan:
@@ -1414,8 +1460,309 @@ def _extract_raw_paragraphs(text: str) -> list[tuple[int, str]]:
     return paragraphs
 
 
+def _detect_exclamation_marks(
+    masked_lines: list[str], raw_lines: list[str]
+) -> list[dict[str, Any]]:
+    """Detect prose exclamation marks outside code, quotes, images, alerts, and !=."""
+    hits: list[dict[str, Any]] = []
+    for idx, mline in enumerate(masked_lines):
+        if not mline.strip():
+            continue
+        cleaned = _strip_md.mask_inline_syntax_for_tells(mline)
+        cleaned = _HTML_COMMENT_FRAG_RE.sub(" ", cleaned)
+        cleaned = _MD_IMAGE_ALT_RE.sub(" ", cleaned)
+        cleaned = _GITHUB_ALERT_RE.sub(" ", cleaned)
+        cleaned = _NOT_EQUAL_RE.sub(" ", cleaned)
+        cleaned = _DOUBLE_QUOTED_LITERAL_RE.sub(" ", cleaned)
+        excl_count = cleaned.count("!")
+        if excl_count > 0:
+            hits.append(
+                {
+                    "line": idx + 1,
+                    "count": excl_count,
+                    "excerpt": _make_excerpt(raw_lines[idx]),
+                }
+            )
+    return hits
+
+
+def _detect_false_agency(
+    masked_lines: list[str], raw_lines: list[str]
+) -> list[dict[str, Any]]:
+    """Detect inanimate metrics, data, or architecture performing human rhetorical acts."""
+    hits: list[dict[str, Any]] = []
+    for idx, mline in enumerate(masked_lines):
+        if not mline.strip():
+            continue
+        cleaned = _strip_md.mask_inline_syntax_for_tells(mline)
+        cleaned = _strip_md.clean_inline_markdown(cleaned, keep_code_text=False)
+        for m in _FALSE_AGENCY_RE.finditer(cleaned):
+            hits.append(
+                {
+                    "line": idx + 1,
+                    "match": re.sub(r"\s+", " ", m.group(0)).strip().lower(),
+                    "excerpt": _make_excerpt(raw_lines[idx]),
+                }
+            )
+    return hits
+
+
+def _split_pre_appendix(text: str) -> tuple[str, bool]:
+    """Split text before the first non-fenced Appendix heading (h1-h3)."""
+    normalized = text.replace("\r\n", "\n").replace("\r", "\n")
+    lines = normalized.split("\n")
+    fm_end = _strip_md._find_frontmatter_end(lines)
+    fence_char = ""
+    fence_len = 0
+    for idx, line in enumerate(lines):
+        if idx <= fm_end:
+            continue
+        if not fence_char:
+            m_fence = _strip_md._FENCE_OPEN_RE.match(line)
+            if m_fence:
+                marker, rest = m_fence.group(1), m_fence.group(2)
+                if not (marker[0] == "`" and "`" in rest):
+                    fence_char = marker[0]
+                    fence_len = len(marker)
+                    continue
+            if _APPENDIX_HEADING_RE.match(line):
+                return "\n".join(lines[:idx]), True
+        else:
+            close_re = re.compile(
+                rf"^(?:\s*>)*\s*{re.escape(fence_char)}{{{fence_len},}}\s*$"
+            )
+            if close_re.match(line):
+                fence_char = ""
+                fence_len = 0
+    return text, False
+
+
+def _compute_body_density(
+    paragraphs_with_lines: list[tuple[int, str]],
+    masked_lines: list[str],
+    raw_lines: list[str],
+) -> tuple[int, float]:
+    """Compute (total_body_words, prose_paragraph_share) separating paragraphs vs lists."""
+    paragraph_words = 0
+    list_words = 0
+    for line_no, para_text in paragraphs_with_lines:
+        wc = len(_WORD_RE.findall(para_text))
+        if wc == 0:
+            continue
+        line_idx = line_no - 1
+        check_line = ""
+        if 0 <= line_idx < len(masked_lines) and masked_lines[line_idx].strip():
+            check_line = masked_lines[line_idx]
+        elif 0 <= line_idx < len(raw_lines):
+            check_line = raw_lines[line_idx]
+        if _LIST_ITEM_PREFIX_RE.match(check_line):
+            list_words += wc
+        else:
+            paragraph_words += wc
+    total_words = paragraph_words + list_words
+    if total_words == 0:
+        return 0, 1.0
+    return total_words, round(paragraph_words / total_words, 3)
+
+
+def _detect_overlong_steps(
+    paragraphs_with_lines: list[tuple[int, str]],
+    masked_lines: list[str],
+    raw_lines: list[str],
+) -> list[dict[str, Any]]:
+    """Flag numbered procedural steps exceeding the 20-word STE ceiling."""
+    hits: list[dict[str, Any]] = []
+    for line_no, para_text in paragraphs_with_lines:
+        line_idx = line_no - 1
+        check_line = ""
+        if 0 <= line_idx < len(masked_lines) and masked_lines[line_idx].strip():
+            check_line = masked_lines[line_idx]
+        elif 0 <= line_idx < len(raw_lines):
+            check_line = raw_lines[line_idx]
+        if not _NUMBERED_STEP_RE.match(check_line):
+            continue
+        wc = len(_WORD_RE.findall(para_text))
+        if wc > 20:
+            excerpt_src = (
+                raw_lines[line_idx]
+                if 0 <= line_idx < len(raw_lines) and raw_lines[line_idx].strip()
+                else para_text
+            )
+            hits.append(
+                {
+                    "line": line_no,
+                    "words": wc,
+                    "excerpt": _make_excerpt(excerpt_src),
+                }
+            )
+    return hits
+
+
+def _detect_date_time_issues(
+    masked_lines: list[str], raw_lines: list[str]
+) -> list[dict[str, Any]]:
+    """Flag ambiguous slash dates and 12-hour AM/PM clock times outside code/quotes."""
+    hits: list[dict[str, Any]] = []
+    for idx, mline in enumerate(masked_lines):
+        if not mline.strip():
+            continue
+        cleaned = _strip_md.mask_inline_syntax_for_tells(mline)
+        cleaned = _BARE_URL_RE.sub(" ", cleaned)
+        cleaned = _DOUBLE_QUOTED_LITERAL_RE.sub(" ", cleaned)
+        line_matches: list[tuple[int, str, str]] = []
+        for m in _SLASH_DATE_RE.finditer(cleaned):
+            line_matches.append(
+                (m.start(), m.group(0), "Use ISO 8601 date format (YYYY-MM-DD)")
+            )
+        for m in _TWELVE_HOUR_TIME_RE.finditer(cleaned):
+            line_matches.append(
+                (m.start(), m.group(0), "Use 24-hour UTC time format (HH:MM UTC)")
+            )
+        line_matches.sort(key=lambda item: item[0])
+        for _, match_str, rec in line_matches:
+            hits.append(
+                {
+                    "line": idx + 1,
+                    "match": match_str,
+                    "recommendation": rec,
+                    "excerpt": _make_excerpt(raw_lines[idx]),
+                }
+            )
+    return hits
+
+
+def _evaluate_profile_checks(
+    profile: str | None,
+    text: str,
+    raw: bool,
+    paragraphs_with_lines: list[tuple[int, str]],
+    masked_lines: list[str],
+    raw_lines: list[str],
+    body_sent_lengths: list[int],
+    body_sent_cv: float,
+) -> dict[str, Any] | None:
+    """Evaluate genre-specific profile checks when a non-default profile is active."""
+    requested = (profile or "default").strip()
+    if requested not in VALID_PROFILES:
+        raise ValueError(
+            f"Unsupported profile {profile!r}; expected one of {', '.join(VALID_PROFILES)}"
+        )
+    if requested == "default":
+        return None
+
+    if requested == "technical":
+        overlong_steps = _detect_overlong_steps(
+            paragraphs_with_lines, masked_lines, raw_lines
+        )
+        date_time_issues = _detect_date_time_issues(masked_lines, raw_lines)
+        return {
+            "profile": "technical",
+            "requested_profile": requested,
+            "passed": len(overlong_steps) == 0 and len(date_time_issues) == 0,
+            "overlong_steps": overlong_steps,
+            "date_time_issues": date_time_issues,
+        }
+
+    if requested in {"memo", "one-pager", "six-pager"}:
+        body_source, has_appendix = _split_pre_appendix(text)
+        if has_appendix:
+            if raw:
+                body_paras = _extract_raw_paragraphs(body_source)
+                body_raw = (
+                    body_source.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+                )
+                body_masked = list(body_raw)
+            else:
+                body_struct = _strip_md.extract_markdown_structure(body_source)
+                body_paras = body_struct.paragraphs_with_lines
+                body_raw = body_struct.raw_lines
+                body_masked = body_struct.masked_lines
+        else:
+            body_paras = paragraphs_with_lines
+            body_masked = masked_lines
+            body_raw = raw_lines
+
+        body_word_count, prose_share = _compute_body_density(
+            body_paras, body_masked, body_raw
+        )
+        date_time_issues = _detect_date_time_issues(body_masked, body_raw)
+
+        resolved = requested
+        if requested == "memo":
+            resolved = "one-pager" if body_word_count <= 750 else "six-pager"
+
+        min_prose_share = 0.80
+        prose_density_ok = prose_share >= min_prose_share
+
+        if resolved == "one-pager":
+            word_budget_range = [350, 550]
+            word_budget_ok = 350 <= body_word_count <= 550
+            return {
+                "profile": resolved,
+                "requested_profile": requested,
+                "passed": (
+                    word_budget_ok
+                    and prose_density_ok
+                    and len(date_time_issues) == 0
+                ),
+                "body_word_count": body_word_count,
+                "appendix_stripped": has_appendix,
+                "word_budget_range": word_budget_range,
+                "word_budget_ok": word_budget_ok,
+                "prose_paragraph_share": prose_share,
+                "min_prose_share": min_prose_share,
+                "prose_density_ok": prose_density_ok,
+                "date_time_issues": date_time_issues,
+            }
+
+        word_budget_max = 2500
+        word_budget_ok = body_word_count <= word_budget_max
+        return {
+            "profile": resolved,
+            "requested_profile": requested,
+            "passed": (
+                word_budget_ok
+                and prose_density_ok
+                and len(date_time_issues) == 0
+            ),
+            "body_word_count": body_word_count,
+            "appendix_stripped": has_appendix,
+            "word_budget_max": word_budget_max,
+            "word_budget_ok": word_budget_ok,
+            "prose_paragraph_share": prose_share,
+            "min_prose_share": min_prose_share,
+            "prose_density_ok": prose_density_ok,
+            "date_time_issues": date_time_issues,
+        }
+
+    # Narrative profile
+    _, prose_share = _compute_body_density(
+        paragraphs_with_lines, masked_lines, raw_lines
+    )
+    min_prose_share = 0.85
+    prose_density_ok = prose_share >= min_prose_share
+    rounded_cv = round(body_sent_cv, 3)
+    min_cv = 0.30
+    cadence_ok = True if len(body_sent_lengths) < 6 else rounded_cv >= min_cv
+    return {
+        "profile": "narrative",
+        "requested_profile": requested,
+        "passed": prose_density_ok and cadence_ok,
+        "prose_paragraph_share": prose_share,
+        "min_prose_share": min_prose_share,
+        "prose_density_ok": prose_density_ok,
+        "body_sentence_count": len(body_sent_lengths),
+        "body_sentence_cv": rounded_cv,
+        "min_body_sentence_cv": min_cv,
+        "cadence_ok": cadence_ok,
+    }
+
+
 def analyze_text(
-    text: str, source: str = "<stdin>", raw: bool = False
+    text: str,
+    source: str = "<stdin>",
+    raw: bool = False,
+    profile: str | None = None,
 ) -> dict[str, Any]:
     """Compute stylometric and mechanical prose diagnostics matching data-model.md."""
     md_struct = _strip_md.extract_markdown_structure(text)
@@ -1587,10 +1934,26 @@ def analyze_text(
         posture_sentences, raw_lines
     )
     stacked_questions = _detect_stacked_questions(sentences)
+    shorthand_ambiguities = _scan_line_regex(
+        _SHORTHAND_AMBIGUITY_RE, masked_lines, raw_lines
+    )
+    exclamation_marks = _detect_exclamation_marks(masked_lines, raw_lines)
+    false_agency = _detect_false_agency(masked_lines, raw_lines)
     passive_count = _count_passive_voice(sentences)
     adverb_count = _count_adverbs(all_words)
 
-    return {
+    profile_checks = _evaluate_profile_checks(
+        profile=profile,
+        text=text,
+        raw=raw,
+        paragraphs_with_lines=paragraphs_with_lines,
+        masked_lines=masked_lines,
+        raw_lines=raw_lines,
+        body_sent_lengths=body_sent_lengths,
+        body_sent_cv=body_sent_cv,
+    )
+
+    report: dict[str, Any] = {
         "source": source,
         "word_count": word_count,
         "sentence_count": sentence_count,
@@ -1633,11 +1996,17 @@ def analyze_text(
             "rhetorical_qa_pivots": rhetorical_qa_pivots,
             "performative_fragments": performative_fragments,
             "stacked_questions": stacked_questions,
+            "shorthand_ambiguities": shorthand_ambiguities,
+            "exclamation_marks": exclamation_marks,
+            "false_agency": false_agency,
             "passive_voice_per_100w": per_100w(passive_count),
             "adverbs_per_100w": per_100w(adverb_count),
             "nominalizations_per_100w": per_100w(nominalization_count),
         },
     }
+    if profile_checks is not None:
+        report["profile_checks"] = profile_checks
+    return report
 
 
 def format_human_report(report: dict[str, Any]) -> str:
@@ -1677,6 +2046,70 @@ def format_human_report(report: dict[str, Any]) -> str:
     ]
 
     findings: list[str] = []
+    profile_checks = report.get("profile_checks")
+    if isinstance(profile_checks, dict):
+        prof = profile_checks["profile"]
+        req = profile_checks.get("requested_profile")
+        prof_label = f"{req} -> {prof}" if req and req != prof else prof
+        status = "PASS" if profile_checks["passed"] else "REVIEW"
+        if prof == "technical":
+            lines.append(
+                f"  Profile ({prof_label}): {status} "
+                f"(overlong_steps={len(profile_checks['overlong_steps'])}, "
+                f"date_time_issues={len(profile_checks['date_time_issues'])})"
+            )
+            for item in profile_checks["overlong_steps"][:5]:
+                findings.append(
+                    f"  - L{item['line']} [overlong_step] ({item['words']}w > 20w): {item['excerpt']}"
+                )
+        elif prof in {"one-pager", "six-pager"}:
+            budget_desc = (
+                "350..550"
+                if prof == "one-pager"
+                else f"<={profile_checks['word_budget_max']}"
+            )
+            lines.append(
+                f"  Profile ({prof_label}): {status} "
+                f"(body_words={profile_checks['body_word_count']}/{budget_desc}, "
+                f"prose_share={profile_checks['prose_paragraph_share']:.1%}, "
+                f"date_time_issues={len(profile_checks['date_time_issues'])})"
+            )
+            if not profile_checks["word_budget_ok"]:
+                target_desc = (
+                    "target 350..550w"
+                    if prof == "one-pager"
+                    else f"ceiling {profile_checks['word_budget_max']}w"
+                )
+                findings.append(
+                    f"  - [word_budget]: pre-Appendix body is {profile_checks['body_word_count']}w ({target_desc})"
+                )
+            if not profile_checks["prose_density_ok"]:
+                findings.append(
+                    f"  - [prose_density]: prose_paragraph_share={profile_checks['prose_paragraph_share']:.1%} "
+                    f"(< {profile_checks['min_prose_share']:.0%} minimum)"
+                )
+        elif prof == "narrative":
+            lines.append(
+                f"  Profile ({prof_label}): {status} "
+                f"(prose_share={profile_checks['prose_paragraph_share']:.1%}, "
+                f"body_cv={profile_checks['body_sentence_cv']})"
+            )
+            if not profile_checks["prose_density_ok"]:
+                findings.append(
+                    f"  - [prose_density]: prose_paragraph_share={profile_checks['prose_paragraph_share']:.1%} "
+                    f"(< {profile_checks['min_prose_share']:.0%} minimum)"
+                )
+            if not profile_checks["cadence_ok"]:
+                findings.append(
+                    f"  - [narrative_cadence]: body_sentence_cv={profile_checks['body_sentence_cv']} "
+                    f"(< 0.30 across {profile_checks['body_sentence_count']} body sentences)"
+                )
+
+        for item in profile_checks.get("date_time_issues", [])[:5]:
+            findings.append(
+                f"  - L{item['line']} [date_time_issue] ({item['match']}): {item['excerpt']}"
+            )
+
     for item in cad["overloaded_sentences"][:5]:
         findings.append(
             f"  - L{item['line']} [overloaded_sentence] ({item['words']}w): {item['excerpt']}"
@@ -1714,6 +2147,9 @@ def format_human_report(report: dict[str, Any]) -> str:
         ("rhetorical_qa_pivots", "rhetorical_qa_pivot"),
         ("performative_fragments", "performative_fragment"),
         ("stacked_questions", "stacked_questions"),
+        ("shorthand_ambiguities", "shorthand_ambiguity"),
+        ("exclamation_marks", "exclamation_mark"),
+        ("false_agency", "false_agency"),
     ]
     for key, label in labeled_categories:
         for item in mech[key][:5]:
@@ -1753,12 +2189,24 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Analyze raw text without stripping Markdown syntax first.",
     )
+    parser.add_argument(
+        "--profile",
+        "--mode",
+        dest="profile",
+        choices=list(VALID_PROFILES),
+        default="default",
+        help=(
+            "Optional genre validation profile (default, technical, memo, "
+            "one-pager, six-pager, narrative)."
+        ),
+    )
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
+    active_profile: str | None = None if args.profile == "default" else args.profile
 
     targets = args.files if args.files else ["-"]
     stdin_cache: str | None = None
@@ -1768,18 +2216,32 @@ def main(argv: list[str] | None = None) -> int:
         if target == "-":
             if stdin_cache is None:
                 stdin_cache = sys.stdin.read()
-            reports.append(analyze_text(stdin_cache, source="<stdin>", raw=args.raw))
+            reports.append(
+                analyze_text(
+                    stdin_cache,
+                    source="<stdin>",
+                    raw=args.raw,
+                    profile=active_profile,
+                )
+            )
         else:
             path = Path(target)
-            if not path.is_file():
-                print(f"error: file not found: {target}", file=sys.stderr)
-                return 2
             try:
+                if not path.is_file():
+                    print(f"error: file not found: {target}", file=sys.stderr)
+                    return 2
                 content = path.read_text(encoding="utf-8")
             except OSError as exc:
                 print(f"error: cannot read {target}: {exc}", file=sys.stderr)
                 return 2
-            reports.append(analyze_text(content, source=target, raw=args.raw))
+            reports.append(
+                analyze_text(
+                    content,
+                    source=target,
+                    raw=args.raw,
+                    profile=active_profile,
+                )
+            )
 
     if args.as_json:
         payload: Any = reports[0] if len(reports) == 1 else reports
@@ -1791,3 +2253,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
