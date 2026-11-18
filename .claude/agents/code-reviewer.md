@@ -1,7 +1,7 @@
 ---
 name: code-reviewer
 description: Review changed files against architecture docs, coding conventions, and the test spec for the current task. Invoke with "use the code-reviewer on these changes" or "review the code before I commit".
-model: inherit
+model: sonnet
 # model-tier: balanced — moderate reasoning with judgment calls about code quality
 color: yellow
 tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]

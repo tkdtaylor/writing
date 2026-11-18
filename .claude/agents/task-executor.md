@@ -1,7 +1,7 @@
 ---
 name: task-executor
 description: Execute a single task from the project plan. Reads the task file and test spec, implements, tests, commits, and reports back. Context is ephemeral — won't bloat the main conversation.
-model: inherit
+model: sonnet
 # model-tier: fast — scoped implementation work with clear specs; set to fastest capable model.
 # Override to `sonnet` (balanced) when tasks routinely span multiple files or sit behind a strict
 # CI/commit gate where a broken commit costs more than the model upgrade.

@@ -1,7 +1,7 @@
 ---
 name: security-auditor
 description: Review source code for OWASP Top 10 vulnerabilities, insecure defaults, secrets in code, and injection risks. Invoke with "use the security-auditor on the auth module" or "run a security pass before we ship".
-model: inherit
+model: opus
 # model-tier: deep — complex reasoning about attack surfaces, trust boundaries, and exploit chains
 color: red
 tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]

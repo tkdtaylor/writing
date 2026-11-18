@@ -1,7 +1,7 @@
 ---
 name: qa
 description: Runs the test suite for the current task and reports failures with context. Identifies missing test cases against the linked test spec. Distinguishes test gaps from genuine bugs. Read-only on source — never "fixes" failing tests by editing them. Invoke with "use the qa agent on task NNN" or "run qa before I close this task".
-model: inherit
+model: sonnet
 # model-tier: balanced — moderate reasoning to differentiate spec gaps, test gaps, and real bugs
 color: orange
 tools: ["Read", "Bash", "Grep", "Glob"]
