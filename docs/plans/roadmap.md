@@ -1,6 +1,6 @@
 # Roadmap
 
-## Milestone 1: Version 1 Core Skill and Diagnostic Suite (Active)
+## Milestone 1: Version 1 Core Skill and Diagnostic Suite (Completed - v0.1.0)
 
 Build a generic, cross-harness open-source LLM writing skill with deterministic workflow modes, register-aware genre guides, zero-dependency Python 3 diagnostics, evaluation rubrics, and calibration samples.
 
@@ -24,10 +24,11 @@ Build a generic, cross-harness open-source LLM writing skill with deterministic 
 - **Task 018:** Blameless SRE postmortem and Keep-a-Changelog release-note blueprints, 3P team updates, thread reply discipline (`No context-rebuilding`), and Voice-of-Customer copy rules.
 - **Task 019:** Spaced `--` and en-dash (`U+2013`) dash-bypass detection plus `chatbot_artifacts` and `meta_and_strawman_tells` detectors in `scripts/prose_lint.py` and `docs/spec/` sync.
 - **Task 020:** Expanded v1.3 behavioral and trigger evals (`evals/evals.json`, `evals/trigger-evals.json`), prior-art acknowledgments, `ALL_TELL_LIST_KEYS` test sync, and documentation release sync.
+- **Task 021:** Adversarial `prose_lint.py` edge-case fixes (`--profile technical` conceptual-enumeration filter, 12-hour time and meta/strawman regex hardening) and deterministic `mixed_dialects` (`en-US` vs `en-GB`) detector.
+- **Task 022:** `v0.1.0` release hygiene across `CHANGELOG.md` (`[0.1.0] - 2026-11-18`), `README.md` (shipped status and pinned `v0.1.0.tar.gz` install URLs), `AGENTS.md`, and `docs/plans/roadmap.md`.
 
-
-## Milestone 2: Corpus Calibration and Iterative Refinement (Planned)
+## Milestone 2: Corpus Calibration and Iterative Refinement (Active)
 
 - Ingest real-world user writing samples via `training/inbox/` to sharpen anti-slop rules, false-positive exclusions, and genre templates.
 - Run blinded A/B evaluation sweeps using `evals/JUDGE.md` and `skill-creator` description optimization.
-- Tag `v0.1.0` public release.
+- Cut v0.2.0 release after first corpus calibration sweep.

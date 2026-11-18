@@ -29,7 +29,7 @@ references/                  <- on-demand workflow & genre guides (<1,500 words 
   longform-and-persuasion.md   essays, VoC landing copy, claim unlocks, UX microcopy, speeches/slides, narrative
 scripts/                     <- zero-dep Python 3 CLIs + repo workflow scripts
   strip_markdown.py            strips Markdown/code/tables/frontmatter to clean reader-visible prose
-  prose_lint.py                stylometric, flourish, dash-bypass, chatbot_artifacts & meta_and_strawman_tells diagnostics
+  prose_lint.py                stylometric, flourish, dash-bypass, chatbot_artifacts, meta_and_strawman_tells & mixed_dialects diagnostics
   validate_skill.py            enforces word budgets (<=1,500/file, <=10,000 combined), routing, links, and hygiene
   package_skill.py             verifies, archives (dist/), and cleanly installs the runtime skill payload
   start-task.sh / finish-task.sh / check-task-state.sh / verify-worktree-isolation.sh
@@ -73,7 +73,7 @@ python3 scripts/package_skill.py --install-to <dir>  # install only the runtime 
 python3 scripts/sync-agy-skills.py            # regenerate .agents/ adapters after .claude/ changes
 ```
 
-Note that `prose_lint.py --profile` (alias `--mode`) supports `default`, `technical`, `memo`, `one-pager`, `six-pager`, and `narrative`. It also flags spaced `--` or en-dash (`U+2013`) dash-bypass substitutes, `chatbot_artifacts`, and `meta_and_strawman_tells` without emitting a composite AI score.
+Note that `prose_lint.py --profile` (alias `--mode`) supports `default`, `technical`, `memo`, `one-pager`, `six-pager`, and `narrative`. It also flags spaced `--` or en-dash (`U+2013`) dash-bypass substitutes, `chatbot_artifacts`, `meta_and_strawman_tells`, and `mixed_dialects` without emitting a composite AI score.
 
 ## Conventions and house prose rules
 

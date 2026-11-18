@@ -4,7 +4,7 @@
 
 **An open-source, cross-harness LLM writing skill and zero-dependency Python 3 diagnostic toolkit for drafting, editing, reviewing, and linting clear human prose across technical, business, and longform media.**
 
-> **Status.** Version 1 core skill routing, workflow and genre guides, diagnostic CLIs, evaluation rubrics, and calibration samples are active on `main`. See [docs/plans/roadmap.md](docs/plans/roadmap.md) for Milestone 2 corpus calibration and `v0.1.0` release plans.
+> **Status.** Release v0.1.0 is live on main with core skill routing, workflow and genre guides, diagnostic CLIs, evaluation rubrics, and calibration samples. See [docs/plans/roadmap.md](docs/plans/roadmap.md) for Milestone 2 corpus calibration.
 
 ## What it does
 
@@ -15,7 +15,7 @@ Weak model-generated drafts fail before sentence polish. Polish comes last. Stan
 - **Substance before surface.** Every workflow verifies factual claims, causal qualifiers, speaker attributions, and concrete human or system mechanisms before adjusting phrasing. Missing numbers, owners, dates, or sources become explicit `[TK: specific question]` markers rather than invented details.
 - **Reader-load reduction.** Structural rules front-load conclusions, preconditions, and safety warnings, keep one job per section, and cut throat-clearing warm-ups plus repetitive closing recaps so busy or skeptical readers finish with less effort.
 - **Deterministic mode and register separation.** [SKILL.md](SKILL.md) routes the active workflow mode (`draft`, `edit`, `review`, `lint`) separately from the target genre register. Each turn loads only the active mode guide and one genre guide (`<= 1,500` words per file, `<= 10,000` words combined). Procedural clarity stays sharp in runbooks without flattening essays, and longform craft stays alive in essays without weakening technical docs.
-- **Diagnostics without a composite AI score.** The stripper in [scripts/strip_markdown.py](scripts/strip_markdown.py) isolates reader-visible prose from Markdown syntax. Next, [scripts/prose_lint.py](scripts/prose_lint.py) reports cadence variation, `MATTR-50` diversity, 3-gram repeats, anchor ratios, and line-numbered tells without a composite AI score. Flourish and baseline checks flag `participial_tail_puffery`, `copula_avoidance`, `rhetorical_qa_pivots`, `performative_fragments`, `nominalizations_per_100w`, `shorthand_ambiguities`, `exclamation_marks`, and `false_agency`. Humanizer and dash-bypass checks also catch spaced `--` or en-dash (`U+2013`) substitutes, `chatbot_artifacts`, and `meta_and_strawman_tells`.
+- **Diagnostics without a composite AI score.** The stripper in [scripts/strip_markdown.py](scripts/strip_markdown.py) isolates reader-visible prose from Markdown syntax. Next, [scripts/prose_lint.py](scripts/prose_lint.py) reports cadence variation, `MATTR-50` diversity, 3-gram repeats, anchor ratios, and line-numbered tells without a composite AI score. Flourish and baseline checks flag `participial_tail_puffery`, `copula_avoidance`, `rhetorical_qa_pivots`, `performative_fragments`, `nominalizations_per_100w`, `shorthand_ambiguities`, `exclamation_marks`, and `false_agency`. Humanizer, dialect, and dash-bypass checks also catch spaced `--` or en-dash (`U+2013`) substitutes, `chatbot_artifacts`, `meta_and_strawman_tells`, and `mixed_dialects`.
 
 ## Architecture and routing flow
 
@@ -92,20 +92,24 @@ From a local checkout, copy only the runtime files into any target skill directo
 python3 scripts/package_skill.py --install-to <skill-dir>
 ```
 
-Or stream the filtered GitHub `main` archive tarball directly (filtered by `.gitattributes` `export-ignore`):
+Or stream a filtered GitHub archive tarball directly (filtered by `.gitattributes` `export-ignore`). Use the pinned `v0.1.0` tag for reproducible installs or `main` to track the latest commits:
 
 ```bash
 mkdir -p <skill-dir>
+# Pinned v0.1.0 release tarball (recommended for reproducible installs)
+curl -fsSL https://github.com/tkdtaylor/writing/archive/refs/tags/v0.1.0.tar.gz | tar -xz --strip-components=1 -C <skill-dir>
+
+# Or latest main branch tarball
 curl -fsSL https://github.com/tkdtaylor/writing/archive/refs/heads/main.tar.gz | tar -xz --strip-components=1 -C <skill-dir>
 ```
 
 ### Claude Code
 
-Unpack the filtered `main` archive tarball under `~/.claude/skills/writing` and optionally copy the four `/write-*` slash command wrappers:
+Unpack the filtered `v0.1.0` release tarball under `~/.claude/skills/writing` and optionally copy the four `/write-*` slash command wrappers:
 
 ```bash
 mkdir -p ~/.claude/skills/writing
-curl -fsSL https://github.com/tkdtaylor/writing/archive/refs/heads/main.tar.gz | tar -xz --strip-components=1 -C ~/.claude/skills/writing
+curl -fsSL https://github.com/tkdtaylor/writing/archive/refs/tags/v0.1.0.tar.gz | tar -xz --strip-components=1 -C ~/.claude/skills/writing
 
 # Optional: install /write-draft, /write-edit, /write-review, and /write-lint
 mkdir -p ~/.claude/commands
@@ -121,7 +125,7 @@ Extract the filtered skill payload into your user-level Antigravity directory (`
 ```bash
 # User-wide installation
 mkdir -p ~/.gemini/config/skills/writing
-curl -fsSL https://github.com/tkdtaylor/writing/archive/refs/heads/main.tar.gz | tar -xz --strip-components=1 -C ~/.gemini/config/skills/writing
+curl -fsSL https://github.com/tkdtaylor/writing/archive/refs/tags/v0.1.0.tar.gz | tar -xz --strip-components=1 -C ~/.gemini/config/skills/writing
 
 # Or workspace-scoped installation from a local checkout
 python3 scripts/package_skill.py --install-to .agents/skills/writing
@@ -134,7 +138,7 @@ Unpack into your user-level Codex skills directory (`~/.codex/skills/writing/`) 
 ```bash
 # User-wide installation
 mkdir -p ~/.codex/skills/writing
-curl -fsSL https://github.com/tkdtaylor/writing/archive/refs/heads/main.tar.gz | tar -xz --strip-components=1 -C ~/.codex/skills/writing
+curl -fsSL https://github.com/tkdtaylor/writing/archive/refs/tags/v0.1.0.tar.gz | tar -xz --strip-components=1 -C ~/.codex/skills/writing
 
 # Or workspace-scoped installation from a local checkout
 python3 scripts/package_skill.py --install-to .agents/skills/writing
@@ -147,11 +151,11 @@ Stage the runtime skill directory into your workspace or point editor rule files
 ```bash
 # GitHub Copilot skill folder
 mkdir -p .github/skills/writing
-curl -fsSL https://github.com/tkdtaylor/writing/archive/refs/heads/main.tar.gz | tar -xz --strip-components=1 -C .github/skills/writing
+curl -fsSL https://github.com/tkdtaylor/writing/archive/refs/tags/v0.1.0.tar.gz | tar -xz --strip-components=1 -C .github/skills/writing
 
 # Cursor workspace rules (.cursor/rules/)
 mkdir -p .cursor/skills/writing .cursor/rules
-curl -fsSL https://github.com/tkdtaylor/writing/archive/refs/heads/main.tar.gz | tar -xz --strip-components=1 -C .cursor/skills/writing
+curl -fsSL https://github.com/tkdtaylor/writing/archive/refs/tags/v0.1.0.tar.gz | tar -xz --strip-components=1 -C .cursor/skills/writing
 cp .cursor/skills/writing/SKILL.md .cursor/rules/writing.mdc
 
 # Windsurf workspace rules (.windsurfrules)
