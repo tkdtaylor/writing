@@ -44,6 +44,7 @@ Eliminate syntactic ambiguity so international readers and machine translators p
 - **Ban bare clause-level `this` and `which`.** Never use standalone `this` (`This spikes tail latency`) or `, which` (`The queue fills up, which drops webhooks`) to refer to a whole clause. Supply an explicit noun (`This lock contention spikes tail latency`) or split into two sentences.
 - **Spell out ambiguous slashes.** Replace `and/or` and overloaded `/` pairs with explicit phrasing (`A, B, or both`; `client and server timeouts`).
 - **Plain international vocabulary.** Replace local idioms, sports metaphors, and Latin shorthand (`e.g.`, `i.e.`) with plain English (`for example`, `that is`).
+- **Consistent dialect, exact identifiers.** Stay consistent within one English dialect (`en-US` vs `en-GB` or `en-AU` spelling, punctuation, and date conventions) across a document or repository rather than mixing dialects mid-piece. Never localize or respell literal UI labels, API field names, config keys, CLI flags, or code identifiers (for example, keep `--color` and `organization_id` exact even inside `en-GB` prose).
 
 ## Blueprint: README files
 

@@ -16,6 +16,8 @@ At runtime, the `writing` skill checks for user or project overrides in this pre
 2. **Workspace style rules** (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, or a linked style guide in the active repo).
 3. **Skill defaults** in `SKILL.md` and the active `references/*.md` genre guide.
 
+Continuous single-line paragraphs apply as the baseline default under item 3 when no formatter governs the target repository. When a project configures a prose formatter or line-length limit (`prettier --prose-wrap always`, `mdformat`, `.editorconfig`, or `markdownlint`), that workspace rule takes precedence under item 2.
+
 ## Repository development environment variables
 
 | Variable | Values | Purpose |
