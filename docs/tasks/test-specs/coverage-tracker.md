@@ -14,7 +14,7 @@ Status legend: `⏳` pending, `🟡` code merged on task branch, `✅` verified 
 | 008 | One-pager, six-pager, and anti-flourish skill guides | `008-one-pager-six-pager-and-anti-flourish-guides-test-spec.md` | ✅ | ✅ | `spec-verifier` APPROVE + L5 (`prose_lint.py` 0 tells + `validate_skill.py`, `c966696`) |
 | 009 | Advanced flourish detectors in `prose_lint.py` and spec sync | `009-advanced-flourish-detectors-in-prose-lint-test-spec.md` | ✅ | ✅ | `spec-verifier` APPROVE + L5 (`make check` 38/38 + 0 clean-repo FPs, `dcc26b0`) |
 | 010 | Memo calibration samples, evals, and documentation sync | `010-memo-samples-evals-and-docs-sync-test-spec.md` | ✅ | ✅ | `spec-verifier` APPROVE + L5 (`make check` 41/41 + `one-pager` delta, `14a8d6a`) |
-| 011 | CLI `OSError` / `PermissionError` fix and restricted-FS tests | `011-fix-cli-oserror-and-restricted-fs-tests-test-spec.md` | ⏳ | ⏳ | N/A |
-| 012 | Negative triggers, dialect consistency, and formatter precedence | `012-negative-triggers-dialect-and-formatter-rules-test-spec.md` | ⏳ | ⏳ | N/A |
-| 013 | `prose_lint.py` detector gaps and `--profile` genre validation | `013-prose-lint-gaps-and-genre-profiles-test-spec.md` | ⏳ | ⏳ | N/A |
+| 011 | CLI `OSError` / `PermissionError` fix and restricted-FS tests | `011-fix-cli-oserror-and-restricted-fs-tests-test-spec.md` | ✅ | ✅ | `spec-verifier` APPROVE + L5 (`PermissionError` mock + `make check`, `341352d`) |
+| 012 | Negative triggers, dialect consistency, and formatter precedence | `012-negative-triggers-dialect-and-formatter-rules-test-spec.md` | ✅ | ✅ | `spec-verifier` APPROVE + L5 (`prose_lint.py` 0 tells + `validate_skill.py`, `dfc9fb7`) |
+| 013 | `prose_lint.py` detector gaps and `--profile` genre validation | `013-prose-lint-gaps-and-genre-profiles-test-spec.md` | ✅ | ✅ | `spec-verifier` APPROVE + L5 (`--profile` CLI checks + `make check` 50/50, `3e6c955`) |
 | 014 | Clean skill packaging and end-user install hygiene | `014-clean-skill-packaging-and-install-hygiene-test-spec.md` | ⏳ | ⏳ | N/A |

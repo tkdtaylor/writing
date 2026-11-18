@@ -30,10 +30,10 @@ Do not edit `docs/tasks/test-specs/coverage-tracker.md` on the task branch.
 ## Implementation details
 
 1. **`.gitattributes` (`export-ignore`):**
-   - Mark `.agents`, `.claude`, `docs`, `tests`, `evals`, `samples`, `artifacts`, `Makefile`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, `CHANGELOG.md`, `.gitignore`, `.gitattributes`, `scripts/check-task-state.sh`, `scripts/start-task.sh`, `scripts/finish-task.sh`, `scripts/verify-worktree-isolation.sh`, `scripts/check-mermaid.py`, `scripts/sync-agy-skills.py`, and `scripts/package_skill.py` as `export-ignore`.
-   - Result: `git archive` and GitHub's `archive/refs/heads/main.tar.gz` (and release tarballs) contain **only** `SKILL.md`, `LICENSE`, `README.md`, `commands/write-*.md`, `references/*.md`, and `scripts/{strip_markdown,prose_lint,validate_skill}.py` — zero `.agents/skills/*` maintainer adapters!
+   - Mark `.agents`, `.claude`, `docs`, `tests`, `evals`, `samples`, `artifacts`, `Makefile`, `README.md`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, `CHANGELOG.md`, `.gitignore`, `.gitattributes`, `scripts/check-task-state.sh`, `scripts/start-task.sh`, `scripts/finish-task.sh`, `scripts/verify-worktree-isolation.sh`, `scripts/check-mermaid.py`, `scripts/sync-agy-skills.py`, and `scripts/package_skill.py` as `export-ignore`.
+   - Result: `git archive` and GitHub's `archive/refs/heads/main.tar.gz` (and release tarballs) contain **only** the self-contained skill payload: `SKILL.md`, `LICENSE`, `commands/write-*.md`, `references/*.md`, and `scripts/{strip_markdown,prose_lint,validate_skill}.py` (zero `.agents/skills/*` maintainer adapters and zero broken repo-only links).
 2. **`scripts/package_skill.py` (mode `0755`, Python 3 stdlib only, `OSError`-safe exit `2`):**
-   - Canonical runtime payload manifest: `SKILL.md`, `LICENSE`, `README.md`, `commands/write-*.md`, `references/*.md`, `scripts/strip_markdown.py`, `scripts/prose_lint.py`, `scripts/validate_skill.py`.
+   - Canonical runtime payload manifest: `SKILL.md`, `LICENSE`, `commands/write-*.md`, `references/*.md`, `scripts/strip_markdown.py`, `scripts/prose_lint.py`, `scripts/validate_skill.py`.
    - CLI options:
      - `--root DIR` (default repo root)
      - `--output-dir DIR` (writes `writing-skill.tar.gz` and `writing.skill` zip archive into `DIR`, e.g. `dist/`)
