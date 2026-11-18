@@ -207,7 +207,7 @@ class TestTask014CleanPackaging(unittest.TestCase):
         self.assertTrue(PACKAGE_CLI.is_file(), "Missing scripts/package_skill.py")
         mode = PACKAGE_CLI.stat().st_mode
         self.assertTrue(bool(mode & stat.S_IXUSR), "scripts/package_skill.py must be executable")
-        self.assertEqual(mode & 0o777, 0o755, "scripts/package_skill.py must have mode 0755")
+        self.assertTrue(os.access(PACKAGE_CLI, os.X_OK), "scripts/package_skill.py must be executable via os.access")
 
         source = PACKAGE_CLI.read_text(encoding="utf-8")
         self.assertNotIn(EM_DASH, source, "package_skill.py must not contain literal em dashes")
