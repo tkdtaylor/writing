@@ -15,7 +15,7 @@
 | [data-model.md](data-model.md) | JSON schemas for `prose_lint.py`, `strip_markdown.py`, `evals/evals.json`, and `evals/trigger-evals.json` |
 | [interfaces.md](interfaces.md) | Slash commands, natural-language triggers, and CLI flags/exit codes for Python scripts |
 | [configuration.md](configuration.md) | Word budgets, optional house-style overrides, and hook environment variables |
-| [fitness-functions.md](fitness-functions.md) | Executable invariants (`F-001`..`F-006`) enforced via `make fitness` |
+| [fitness-functions.md](fitness-functions.md) | Executable invariants (`F-001`..`F-007`) enforced via `make fitness` |
 
 ## Non-negotiable invariants
 
