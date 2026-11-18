@@ -760,7 +760,15 @@ def main(argv: list[str] | None = None) -> int:
         return int(exc.code) if isinstance(exc.code, int) else 2
 
     root = Path(args.root)
-    if not root.is_dir():
+    try:
+        is_dir = root.is_dir()
+    except OSError as exc:
+        print(
+            f"error: cannot access root directory {args.root}: {exc}",
+            file=sys.stderr,
+        )
+        return 2
+    if not is_dir:
         print(f"error: root directory not found: {args.root}", file=sys.stderr)
         return 2
 

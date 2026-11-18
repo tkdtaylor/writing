@@ -487,10 +487,10 @@ def main(argv: list[str] | None = None) -> int:
         content = sys.stdin.read()
     else:
         path = Path(args.file)
-        if not path.is_file():
-            print(f"error: file not found: {args.file}", file=sys.stderr)
-            return 2
         try:
+            if not path.is_file():
+                print(f"error: file not found: {args.file}", file=sys.stderr)
+                return 2
             content = path.read_text(encoding="utf-8")
         except OSError as exc:
             print(f"error: cannot read {args.file}: {exc}", file=sys.stderr)

@@ -152,8 +152,10 @@ class TestTask006ValidateSkill(unittest.TestCase):
                 )
 
         # CLI usage errors return exit code 2
-        missing_root_proc = _run_validator("--root", "/nonexistent/skill/root/path")
-        self.assertEqual(missing_root_proc.returncode, 2)
+        with tempfile.TemporaryDirectory() as tmp:
+            missing_root = str(Path(tmp) / "nonexistent" / "skill" / "root")
+            missing_root_proc = _run_validator("--root", missing_root)
+            self.assertEqual(missing_root_proc.returncode, 2)
         bad_flag_proc = _run_validator("--unsupported-flag")
         self.assertEqual(bad_flag_proc.returncode, 2)
 
